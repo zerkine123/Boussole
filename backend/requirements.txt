@@ -6,6 +6,7 @@
 # ============================================
 # Core Framework
 # ============================================
+groq>=0.4.2
 fastapi==0.109.0
 uvicorn[standard]==0.27.0
 pydantic
@@ -47,7 +48,7 @@ flower==2.0.1
 # openai==1.10.0
 # google-generativeai
 google-generativeai
-groq>=0.4.2
+# groq moved to top
 # tiktoken==0.5.2
 
 # ============================================
