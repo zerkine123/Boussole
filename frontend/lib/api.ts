@@ -1,7 +1,8 @@
 // API client for Boussole backend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// Hardcoded for debugging
+const API_BASE_URL = "https://boussole-backend.up.railway.app";
+// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 console.log("DEBUG: API_BASE_URL is:", API_BASE_URL);
-console.log("DEBUG: NEXT_PUBLIC_API_URL is:", process.env.NEXT_PUBLIC_API_URL);
 
 export interface ApiResponse<T> {
   data: T;
