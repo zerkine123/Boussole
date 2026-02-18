@@ -1,0 +1,202 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Green / Glassmorphism Palette */
+    --background: 150 30% 98%;
+    /* Very pale green/white */
+    --foreground: 164 80% 16%;
+    /* Deep forest green text */
+
+    --card: 0 0% 100%;
+    --card-foreground: 164 80% 16%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 164 80% 16%;
+
+    --primary: 160 84% 39%;
+    /* Emerald 600 - Main Brand Color */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 30% 90%;
+    /* Light minty grey */
+    --secondary-foreground: 164 80% 16%;
+
+    --muted: 150 20% 94%;
+    --muted-foreground: 160 10% 45%;
+
+    --accent: 152 70% 90%;
+    /* Light green accent */
+    --accent-foreground: 160 84% 39%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 150 20% 90%;
+    --input: 150 20% 90%;
+    --ring: 160 84% 39%;
+
+    --radius: 1rem;
+    /* More rounded corners */
+
+    /* Semantic tokens */
+    --navbar-bg: 160 84% 39%;
+    /* Primary Green */
+    --navbar-fg: 0 0% 100%;
+    --navbar-muted: 150 30% 90%;
+    --navbar-accent: 150 30% 96%;
+
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 164 80% 6%;
+    --foreground: 150 30% 98%;
+
+    --card: 164 60% 10%;
+    --card-foreground: 150 30% 98%;
+
+    --popover: 164 60% 10%;
+    --popover-foreground: 150 30% 98%;
+
+    --primary: 160 84% 39%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 164 40% 20%;
+    --secondary-foreground: 150 30% 98%;
+
+    --muted: 164 40% 20%;
+    --muted-foreground: 150 20% 70%;
+
+    --accent: 164 40% 20%;
+    --accent-foreground: 150 30% 98%;
+
+    --destructive: 0 62% 30%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 164 40% 20%;
+    --input: 164 40% 20%;
+    --ring: 160 84% 39%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(at 0% 0%, hsla(152, 70%, 90%, 0.5) 0px, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(160, 84%, 95%, 0.5) 0px, transparent 50%);
+    background-attachment: fixed;
+  }
+}
+
+/* Glassmorphism Utilities */
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+}
+
+.glass-dark {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Banner gradient — Green flow */
+.banner-gradient {
+  background: linear-gradient(135deg,
+      hsla(160, 84%, 39%, 1) 0%,
+      hsla(150, 60%, 50%, 1) 100%);
+}
+
+/* Status badge styles */
+.badge-active {
+  @apply bg-emerald-100 text-emerald-700 text-xs font-medium px-2.5 py-0.5 rounded-full;
+}
+
+.badge-draft {
+  @apply bg-amber-100 text-amber-700 text-xs font-medium px-2.5 py-0.5 rounded-full;
+}
+
+.badge-review {
+  @apply bg-blue-100 text-blue-700 text-xs font-medium px-2.5 py-0.5 rounded-full;
+}
+
+.badge-approved {
+  @apply bg-emerald-100 text-emerald-700 text-xs font-medium px-2.5 py-0.5 rounded-full;
+}
+
+/* Smooth scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* RTL Support */
+[dir="rtl"] {
+  direction: rtl;
+}
+
+[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .flex-row-reverse {
+  flex-direction: row;
+}
+
+[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+[dir="rtl"] .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+[dir="rtl"] .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+[dir="rtl"] .pl-4 {
+  padding-left: 0;
+  padding-right: 1rem;
+}
+
+[dir="rtl"] .pr-4 {
+  padding-right: 0;
+  padding-left: 1rem;
+}

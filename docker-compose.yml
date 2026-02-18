@@ -1,0 +1,181 @@
+# Boussole - Algerian Data Analytics SaaS
+# Docker Compose configuration for local development
+version: "3.9"
+
+services:
+  # PostgreSQL Database with pgvector and PostGIS extensions
+  postgres:
+    image: pgvector/pgvector:pg16-postgis
+    container_name: boussole-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-boussole}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-boussole_password}
+      POSTGRES_DB: ${POSTGRES_DB:-boussole}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-boussole}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - boussole-network
+
+  # Redis for caching and Celery broker
+  redis:
+    image: redis:7-alpine
+    container_name: boussole-redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - boussole-network
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: boussole-backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-boussole}:${POSTGRES_PASSWORD:-boussole_password}@postgres:5432/${POSTGRES_DB:-boussole}
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-your-jwt-secret-key-change-in-production}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - boussole-network
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  # Celery Worker for background tasks
+  celery-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: boussole-celery-worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-boussole}:${POSTGRES_PASSWORD:-boussole_password}@postgres:5432/${POSTGRES_DB:-boussole}
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+      - ./data:/app/data
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - boussole-network
+    command: celery -A app.tasks.celery_app worker --loglevel=info
+
+  # Celery Beat for scheduled tasks
+  celery-beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: boussole-celery-beat
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-boussole}:${POSTGRES_PASSWORD:-boussole_password}@postgres:5432/${POSTGRES_DB:-boussole}
+      REDIS_URL: redis://redis:6379/0
+      SECRET_KEY: ${SECRET_KEY:-your-secret-key-change-in-production}
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+    volumes:
+      - ./backend:/app
+      - backend_venv:/app/.venv
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - boussole-network
+    command: celery -A app.tasks.celery_app beat --loglevel=info
+
+  # Flower for Celery monitoring
+  flower:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: boussole-flower
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      FLOWER_PORT: ${FLOWER_PORT:-5555}
+    ports:
+      - "${FLOWER_PORT:-5555}:5555"
+    depends_on:
+      - redis
+    networks:
+      - boussole-network
+    command: celery -A app.tasks.celery_app flower --port=5555
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: boussole-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-nextauth-secret-change-in-production}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      NODE_ENV: ${NODE_ENV:-development}
+    ports:
+      - "${FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - backend
+    networks:
+      - boussole-network
+    command: npm run dev
+
+  # pgAdmin for database management (optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: boussole-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@boussole.dz}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    depends_on:
+      - postgres
+    networks:
+      - boussole-network
+
+networks:
+  boussole-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_venv:

@@ -1,0 +1,445 @@
+{
+  "common": {
+    "appName": "Boussole",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "filter": "Filter",
+    "export": "Export",
+    "import": "Import",
+    "download": "Download",
+    "upload": "Upload",
+    "next": "Next",
+    "previous": "Previous",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "back": "Back",
+    "close": "Close",
+    "open": "Open",
+    "view": "View",
+    "actions": "Actions",
+    "selectAll": "Select All",
+    "clearAll": "Clear All",
+    "apply": "Apply",
+    "reset": "Reset",
+    "welcome": "Welcome to Boussole"
+  },
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "sectors": "Sectors",
+    "data": "Data",
+    "analytics": "Analytics",
+    "rag": "AI Assistant",
+    "settings": "Settings",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "onboarding": {
+    "title": "Welcome to Boussole",
+    "subtitle": "Let's personalize your experience",
+    "steps": {
+      "useCase": {
+        "title": "1. What's your primary use case?",
+        "description": "Tell us how you plan to use Boussole",
+        "options": {
+          "academic": "Academic Research",
+          "business": "Business Intelligence",
+          "government": "Government Planning",
+          "journalism": "Journalism & Media",
+          "personal": "Personal Interest"
+        }
+      },
+      "sectors": {
+        "title": "2. Which sectors interest you?",
+        "description": "Select the sectors you want to explore",
+        "selectAll": "Select All",
+        "clearAll": "Clear All"
+      },
+      "wilayas": {
+        "title": "3. Which Wilayas interest you?",
+        "description": "Select the provinces you want to analyze",
+        "selectAll": "Select All",
+        "clearAll": "Clear All"
+      },
+      "language": {
+        "title": "4. Preferred Language",
+        "description": "Choose your preferred language"
+      },
+      "organization": {
+        "title": "5. Organization (Optional)",
+        "description": "Tell us about your organization",
+        "placeholder": "Enter organization name"
+      }
+    },
+    "sectors": {
+      "agriculture": "Agriculture",
+      "energy": "Energy",
+      "manufacturing": "Manufacturing",
+      "services": "Services",
+      "tourism": "Tourism"
+    },
+    "wilayas": {
+      "01": "Algiers",
+      "02": "Oran",
+      "03": "Constantine",
+      "04": "Setif",
+      "05": "Batna",
+      "06": "Annaba",
+      "07": "Skikda",
+      "08": "Tlemcen",
+      "09": "Tizi Ouzou",
+      "10": "Béjaïa",
+      "11": "Biskra",
+      "12": "Boumerdès",
+      "13": "Tébessa",
+      "14": "Jijel",
+      "15": "Sétif",
+      "16": "Tamanrasset",
+      "17": "El Oued",
+      "18": "Ghardaïa",
+      "19": "Khenchela",
+      "20": "Souk Ahras",
+      "21": "Tipaza",
+      "22": "Mila",
+      "23": "Adrar",
+      "24": "El Tarf",
+      "25": "Tindouf",
+      "26": "El Oued",
+      "27": "El M'Ghaïr",
+      "28": "Naâma",
+      "29": "Tamanrasset",
+      "30": "Ouargla",
+      "31": "Tébessa",
+      "32": "Illizi",
+      "33": "Bordj Bou Arreridj",
+      "34": "Béjaïa",
+      "35": "Biskra",
+      "36": "M'Sila",
+      "37": "Souk Ahras",
+      "38": "El Bayadh",
+      "39": "Khenchela",
+      "40": "Tipaza",
+      "41": "Laghouat",
+      "42": "Guelma",
+      "43": "Relizane",
+      "44": "Tébessa",
+      "45": "Tindouf",
+      "46": "M'Sila",
+      "47": "Souk Ahras",
+      "48": "El Bayadh"
+    },
+    "languages": {
+      "en": "English",
+      "fr": "Français",
+      "ar": "العربية"
+    },
+    "buttons": {
+      "next": "Next",
+      "previous": "Previous",
+      "skip": "Skip",
+      "submit": "Complete Setup",
+      "step": "Step {current} of {total}"
+    },
+    "success": {
+      "title": "Setup Complete!",
+      "message": "Your preferences have been saved. Redirecting to dashboard...",
+      "button": "Go to Dashboard"
+    }
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to Boussole",
+    "overview": "Explore Algeria's economic data and insights",
+    "filterBySector": "Filter by sector",
+    "allSectors": "All Sectors",
+    "wilayaHeatmap": "Wilaya Heatmap",
+    "wilayaHeatmapDescription": "Interactive map showing data distribution across Algerian provinces",
+    "wilayaCode": "Wilaya Code",
+    "quickCharts": "Quick Charts",
+    "sectorDistribution": "Sector Distribution",
+    "regionalGrowth": "Regional Growth",
+    "trendingInsights": "Trending Insights",
+    "insight1": {
+      "title": "Agriculture Growth",
+      "description": "Agricultural production increased by 12% in 2024, driven by wheat and date farming expansion."
+    },
+    "insight2": {
+      "title": "Energy Sector",
+      "description": "Renewable energy capacity grew by 15%, with solar and wind leading the transition."
+    },
+    "insight3": {
+      "title": "Tourism Recovery",
+      "description": "Tourism revenue reached pre-pandemic levels, with Saharan destinations seeing 40% growth."
+    },
+    "kpi": {
+      "gdp": {
+        "title": "GDP",
+        "description": "Gross Domestic Product",
+        "trend": "up"
+      },
+      "population": {
+        "title": "Population",
+        "description": "Total population",
+        "trend": "up"
+      },
+      "agriculture": {
+        "title": "Agriculture",
+        "description": "Agricultural contribution to GDP",
+        "trend": "up"
+      },
+      "energy": {
+        "title": "Energy Production",
+        "description": "Total energy output",
+        "trend": "up"
+      },
+      "investment": {
+        "title": "FDI",
+        "description": "Foreign Direct Investment",
+        "trend": "up"
+      },
+      "unemployment": {
+        "title": "Unemployment",
+        "description": "Unemployment rate",
+        "trend": "down"
+      }
+    },
+    "sectors": {
+      "agriculture": "Agriculture",
+      "energy": "Energy",
+      "manufacturing": "Manufacturing",
+      "services": "Services",
+      "tourism": "Tourism"
+    },
+    "searchButton": "Search",
+    "searchPlaceholder": "Search data, market prices, sectors...",
+    "intentMarket": "Market Prices",
+    "intentData": "Economic Data",
+    "intentSector": "Sector Info",
+    "intentAI": "AI Assistant"
+  },
+  "market": {
+    "title": "Market Prices",
+    "subtitle": "Product listings from Ouedkniss",
+    "backToDashboard": "Back to Dashboard",
+    "results": "results",
+    "loading": "Searching products...",
+    "error": "Failed to fetch results. Please try again.",
+    "retry": "Retry",
+    "noResults": "No results found",
+    "noResultsHint": "Try different keywords or check the spelling"
+  },
+  "dataExplorer": {
+    "title": "Data Explorer",
+    "subtitle": "Explore and analyze Algeria's economic data",
+    "columns": {
+      "wilaya": "Wilaya",
+      "sector": "Sector",
+      "metric": "Metric",
+      "year": "Year",
+      "value": "Value",
+      "unit": "Unit"
+    },
+    "filters": {
+      "title": "Filters",
+      "sectors": "Sectors",
+      "wilayas": "Wilayas",
+      "metrics": "Metrics",
+      "yearRange": "Year Range",
+      "from": "From",
+      "to": "To",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters"
+    },
+    "stats": {
+      "totalRecords": "Total Records",
+      "wilayas": "Wilayas",
+      "sectors": "Sectors",
+      "years": "Years"
+    },
+    "charts": {
+      "sectorDistribution": "Sector Distribution",
+      "yearTrend": "Yearly Trend"
+    },
+    "table": {
+      "title": "Data Table",
+      "description": "Filtered data results",
+      "records": "records",
+      "showingFirst100": "Showing first 100 of {total} records"
+    },
+    "loading": "Loading data...",
+    "noData": "No data available",
+    "refresh": "Refresh",
+    "export": {
+      "button": "Export",
+      "success": "Export successful",
+      "error": "Export failed"
+    }
+  },
+  "aiAssistant": {
+    "title": "AI Assistant",
+    "open": "Open AI Assistant",
+    "welcome": {
+      "title": "Ask me anything about Algeria's data",
+      "subtitle": "I can help you analyze trends, compare regions, and provide insights"
+    },
+    "suggestions": {
+      "title": "Try asking:",
+      "compareWilayas": "Compare potato production in Biskra vs national average 2015-2024",
+      "trendAnalysis": "What are the key trends in Algeria's energy sector?",
+      "sectorOverview": "Give me an overview of tourism in Southern Algeria",
+      "forecast": "Forecast GDP growth for the next 5 years"
+    },
+    "sources": "Sources",
+    "loading": "Thinking...",
+    "input": {
+      "placeholder": "Ask a question about Algeria's data...",
+      "disclaimer": "AI responses may not always be accurate. Verify important information."
+    },
+    "export": {
+      "button": "Export to Excel",
+      "success": "Export successful",
+      "error": "Export failed"
+    },
+    "error": {
+      "message": "Sorry, I couldn't process your request. Please try again.",
+      "dismiss": "Dismiss"
+    }
+  },
+  "sectors": {
+    "title": "Sectors",
+    "description": "Explore Algeria's economic sectors",
+    "agriculture": {
+      "title": "Agriculture",
+      "description": "Agricultural production, farming, and food security"
+    },
+    "energy": {
+      "title": "Energy",
+      "description": "Oil, gas, and renewable energy production"
+    },
+    "manufacturing": {
+      "title": "Manufacturing",
+      "description": "Industrial production and manufacturing"
+    },
+    "services": {
+      "title": "Services",
+      "description": "Financial, IT, and professional services"
+    },
+    "tourism": {
+      "title": "Tourism",
+      "description": "Travel, hospitality, and cultural tourism"
+    },
+    "construction": {
+      "title": "Construction",
+      "description": "Building and infrastructure development"
+    }
+  },
+  "auth": {
+    "login": {
+      "title": "Sign In",
+      "email": "Email",
+      "password": "Password",
+      "remember": "Remember me",
+      "forgot": "Forgot password?",
+      "button": "Sign In",
+      "noAccount": "Don't have an account?",
+      "signUp": "Sign Up"
+    },
+    "register": {
+      "title": "Create Account",
+      "name": "Full Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "button": "Create Account",
+      "hasAccount": "Already have an account?",
+      "signIn": "Sign In"
+    }
+  },
+  "about": {
+    "title": "About Us",
+    "mission": "Our Mission",
+    "missionText": "To empower Algerian businesses and policymakers with accurate, real-time economic data and actionable insights.",
+    "values": "Core Values",
+    "value1": "Transparency",
+    "value1Text": "Open access to reliable data sources.",
+    "value2": "Innovation",
+    "value2Text": "Leveraging AI to uncover hidden trends.",
+    "value3": "Impact",
+    "value3Text": "Driving economic growth through informed decisions."
+  },
+  "pricing": {
+    "title": "Pricing Plans",
+    "subtitle": "Choose the plan that fits your needs",
+    "monthly": "/month",
+    "free": {
+      "title": "Free",
+      "price": "0 DZD",
+      "description": "Essential access for students and researchers",
+      "features": {
+        "1": "Access to public data",
+        "2": "Basic search",
+        "3": "Monthly reports (PDF)"
+      },
+      "button": "Get Started"
+    },
+    "pro": {
+      "title": "Pro",
+      "price": "2,500 DZD",
+      "description": "Advanced tools for business owners",
+      "features": {
+        "1": "All Free features",
+        "2": "Unlimited data export",
+        "3": "Wilaya comparison tools",
+        "4": "AI Assistant (50 queries/mo)"
+      },
+      "button": "Start Free Trial"
+    },
+    "enterprise": {
+      "title": "Enterprise",
+      "price": "Custom",
+      "period": "/year",
+      "description": "Full power for large organizations",
+      "features": {
+        "1": "All Pro features",
+        "2": "API Access",
+        "3": "Custom dashboards",
+        "4": "Dedicated support",
+        "5": "Unlimited AI queries"
+      },
+      "button": "Contact Sales"
+    }
+  },
+  "contact": {
+    "title": "Contact Us",
+    "subtitle": "Get in touch with our team",
+    "form": {
+      "name": "Name",
+      "email": "Email",
+      "message": "Message",
+      "submit": "Send Message"
+    },
+    "info": {
+      "email": "Email Us",
+      "phone": "Call Us",
+      "address": "Visit Us",
+      "addressText": "123 Startup Avenue, Algiers, Algeria"
+    }
+  },
+  "footer": {
+    "company": "Company",
+    "about": "About Us",
+    "careers": "Careers",
+    "legal": "Legal",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "social": "Follow Us",
+    "rights": "© 2024 Boussole. All rights reserved."
+  }
+}
