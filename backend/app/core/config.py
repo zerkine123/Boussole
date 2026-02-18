@@ -3,8 +3,9 @@
 # ============================================
 
 from pydantic_settings import BaseSettings
-from typing import List, Optional
+from typing import List, Optional, Any
 from functools import lru_cache
+from pydantic import field_validator
 
 
 class Settings(BaseSettings):
@@ -25,6 +26,18 @@ class Settings(BaseSettings):
     # Database Settings
     # ============================================
     DATABASE_URL: str = "postgresql+asyncpg://boussole:boussole_password@localhost:5432/boussole"
+
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def assemble_db_connection(cls, v: Optional[str]) -> Any:
+        if isinstance(v, str):
+            # Fix Heroku/Railway usage of postgres://
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+asyncpg://", 1)
+            # Fix sync driver usage
+            if v.startswith("postgresql://") and "+asyncpg" not in v:
+                return v.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return v
     
     # ============================================
     # Redis Settings
