@@ -26,9 +26,6 @@ class ApiError extends Error {
     this.statusCode = statusCode;
     this.details = details;
   }
-
-  statusCode?: number;
-  details?: any;
 }
 
 async function handleResponse<T>(response: Response): Promise<T> {
