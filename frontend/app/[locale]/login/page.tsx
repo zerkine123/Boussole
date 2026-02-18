@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Compass, Loader2 } from "lucide-react";
 import { useState } from "react";
+import api from "@/lib/api";
 
 export default function LoginPage() {
     const t = useTranslations("auth.login");
@@ -30,21 +31,8 @@ export default function LoginPage() {
         setIsLoading(true);
 
         try {
-            const loginBody = new URLSearchParams();
-            loginBody.append('username', formData.email);
-            loginBody.append('password', formData.password);
+            const data = await api.login(formData.email, formData.password);
 
-            const res = await fetch("/api/v1/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: loginBody,
-            });
-
-            if (!res.ok) {
-                throw new Error("Invalid credentials");
-            }
-
-            const data = await res.json();
             localStorage.setItem("access_token", data.access_token);
             localStorage.setItem("refresh_token", data.refresh_token);
 

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Compass, Loader2 } from "lucide-react";
 import { useState } from "react";
+import api from "@/lib/api";
 
 export default function RegisterPage() {
     const t = useTranslations("auth.register");
@@ -40,38 +41,16 @@ export default function RegisterPage() {
 
         try {
             // 1. Register
-            const registerRes = await fetch("/api/v1/auth/register", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: formData.email,
-                    password: formData.password,
-                    full_name: formData.name,
-                    preferred_language: locale
-                }),
+            await api.register({
+                email: formData.email,
+                password: formData.password,
+                full_name: formData.name,
+                preferred_language: locale
             });
-
-            if (!registerRes.ok) {
-                const errorData = await registerRes.json();
-                throw new Error(errorData.detail || "Registration failed");
-            }
 
             // 2. Login to get token
-            const loginBody = new URLSearchParams();
-            loginBody.append('username', formData.email);
-            loginBody.append('password', formData.password);
+            const data = await api.login(formData.email, formData.password);
 
-            const loginRes = await fetch("/api/v1/auth/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: loginBody,
-            });
-
-            if (!loginRes.ok) {
-                throw new Error("Login failed during auto-login");
-            }
-
-            const data = await loginRes.json();
             localStorage.setItem("access_token", data.access_token);
             localStorage.setItem("refresh_token", data.refresh_token);
 
