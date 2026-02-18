@@ -47,6 +47,7 @@ flower==2.0.1
 # openai==1.10.0
 # google-generativeai
 google-generativeai
+groq>=0.4.2
 # tiktoken==0.5.2
 
 # ============================================
