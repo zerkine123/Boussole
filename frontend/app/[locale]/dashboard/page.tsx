@@ -42,6 +42,7 @@ import {
   getSearchRoute,
   getIntentDisplay,
 } from "@/lib/searchRouter";
+import { api } from "@/lib/api";
 
 const Map = dynamic(() => import("@/components/Map"), {
   ssr: false,
@@ -139,12 +140,6 @@ export default function DashboardPage() {
     if (e.key === "Enter") handleSearch();
   };
 
-  const handleSuggestionClick = (label: string) => {
-    const classified = classifySearchIntent(label);
-    const route = getSearchRoute(classified, locale);
-    router.push(route);
-  };
-
   const clearSearch = () => setSearchQuery("");
 
   const [preferredSector, setPreferredSector] = useState<AvailableSector | null>(null);
@@ -156,23 +151,15 @@ export default function DashboardPage() {
         const token = localStorage.getItem('access_token');
         if (!token) return;
 
-        const response = await fetch('/api/v1/onboarding/data', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
+        const data: OnboardingData = await api.getOnboardingData(token);
 
-        if (response.ok) {
-          const data: OnboardingData = await response.json();
-
-          // Determine preferred sector
-          const prefs = data.current_preferences;
-          if (prefs && prefs.sectors_of_interest && prefs.sectors_of_interest.length > 0) {
-            const sectorId = prefs.sectors_of_interest[0];
-            const sector = data.available_sectors.find(s => s.id === sectorId);
-            if (sector) {
-              setPreferredSector(sector);
-            }
+        // Determine preferred sector
+        const prefs = data.current_preferences;
+        if (prefs && prefs.sectors_of_interest && prefs.sectors_of_interest.length > 0) {
+          const sectorId = prefs.sectors_of_interest[0];
+          const sector = data.available_sectors.find(s => s.id === sectorId);
+          if (sector) {
+            setPreferredSector(sector);
           }
         }
       } catch (error) {
@@ -452,6 +439,3 @@ export default function DashboardPage() {
     </DashboardLayout>
   );
 }
-
-
-

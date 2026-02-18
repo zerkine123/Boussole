@@ -307,6 +307,63 @@ export const api = {
     });
     return handleResponse<{ reply: string }>(response);
   },
+
+  // Onboarding endpoints
+  async getOnboardingData(token: string) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/onboarding/data`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return handleResponse<any>(response);
+  },
+
+  async completeOnboarding(token: string, preferences: any) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/onboarding/complete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ preferences }),
+    });
+    return handleResponse(response);
+  },
+
+  async skipOnboarding(token: string) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/onboarding/skip`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({}),
+    });
+    return handleResponse(response);
+  },
+
+  // Search endpoints
+  async analyzeSearch(token: string | null, query: string) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/search/analyze`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ query }),
+    });
+    return handleResponse<any>(response);
+  },
+
+  async getDynamicLayout(query: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/v1/search/dynamic-layout`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ query }),
+      },
+    );
+    return handleResponse<any>(response);
+  },
 };
 
 export default api;

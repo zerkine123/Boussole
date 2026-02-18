@@ -25,8 +25,7 @@ import {
     Download,
 } from "lucide-react";
 import { generateReportPdf } from "@/lib/generateReportPdf";
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import { api } from "@/lib/api";
 
 // Color palette for charts
 const CHART_COLORS = [
@@ -290,20 +289,7 @@ export default function DynamicDataView({ query, onBack }: DynamicDataViewProps)
             setIsLoading(true);
             setError(null);
             try {
-                const response = await fetch(
-                    `${API_BASE_URL}/api/v1/search/dynamic-layout`,
-                    {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ query }),
-                    }
-                );
-
-                if (!response.ok) {
-                    throw new Error(`API error: ${response.status}`);
-                }
-
-                const data = await response.json();
+                const data = await api.getDynamicLayout(query);
                 setLayout(data);
             } catch (err: any) {
                 console.error("Layout fetch error:", err);

@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { ChevronRight, ChevronLeft, CheckCircle2, Loader2, Briefcase, Layers, Map, Globe } from 'lucide-react';
 import DashboardLayout from "@/components/DashboardLayout";
 import { Progress } from "@/components/ui/progress";
+import { api } from '@/lib/api';
 
 type OnboardingStep = {
   id: number;
@@ -139,29 +140,18 @@ export default function OnboardingPage() {
     setError('');
 
     try {
+      const token = localStorage.getItem('access_token');
+      if (!token) throw new Error('No access token found');
+
       // API call to save preferences
-      const response = await fetch('/api/v1/onboarding/complete', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({
-          preferences: {
-            use_case: useCase,
-            sectors_of_interest: selectedSectors,
-            wilayas_of_interest: selectedWilayas,
-            preferred_language: preferredLanguage,
-            organization: organization,
-          },
-        }),
+      await api.completeOnboarding(token, {
+        use_case: useCase,
+        sectors_of_interest: selectedSectors,
+        wilayas_of_interest: selectedWilayas,
+        preferred_language: preferredLanguage,
+        organization: organization,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to save preferences');
-      }
-
-      const data = await response.json();
       setIsCompleted(true);
       router.push('/dashboard');
     } catch (err) {
@@ -181,18 +171,10 @@ export default function OnboardingPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/v1/onboarding/skip', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
-        },
-        body: JSON.stringify({}),
-      });
+      const token = localStorage.getItem('access_token');
+      if (!token) throw new Error('No access token found');
 
-      if (!response.ok) {
-        throw new Error('Failed to skip onboarding');
-      }
+      await api.skipOnboarding(token);
 
       router.push('/dashboard');
     } catch (err) {

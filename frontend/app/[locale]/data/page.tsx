@@ -54,6 +54,7 @@ import {
 import DashboardLayout from "@/components/DashboardLayout";
 import DynamicDataView from "@/components/DynamicDataView";
 import { Sparkles } from "lucide-react";
+import { api } from "@/lib/api";
 
 // Algeria Wilayas
 const WILAYAS = [
@@ -172,40 +173,31 @@ export default function DataExplorerPage() {
 
       // 2. Call Backend API
       const token = localStorage.getItem("access_token"); // Optional: if protected
-      const response = await fetch("/api/v1/search/analyze", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({ query }),
-      });
+      const data: SearchAnalysisResponse = await api.analyzeSearch(token, query);
 
-      if (response.ok) {
-        const data: SearchAnalysisResponse = await response.json();
-        const { topic, location, subtopic, intent } = data.analysis;
+      const { topic, location, subtopic, intent } = data.analysis;
 
-        // 3. Apply Filters based on AI Analysis
-        if (topic) {
-          // Map topic to sector ID
-          const matchedSector = SECTORS.find(s => s.id === topic || s.name.toLowerCase().includes(topic));
-          if (matchedSector) {
-            setSelectedSectors(prev => [...new Set([...prev, matchedSector.id])]);
-            setShowFilters(true);
-          }
+      // 3. Apply Filters based on AI Analysis
+      if (topic) {
+        // Map topic to sector ID
+        const matchedSector = SECTORS.find(s => s.id === topic || s.name.toLowerCase().includes(topic));
+        if (matchedSector) {
+          setSelectedSectors(prev => [...new Set([...prev, matchedSector.id])]);
+          setShowFilters(true);
         }
-
-        if (location) {
-          const matchedWilaya = WILAYAS.find(w => w.code === location);
-          if (matchedWilaya) {
-            setSelectedWilayas(prev => [...new Set([...prev, matchedWilaya.code])]);
-            setShowFilters(true);
-          }
-        }
-
-        // If high confidence, maybe clear purely textual search to show all sector data?
-        // For now, keep it, but maybe optimize user experience later.
       }
+
+      if (location) {
+        const matchedWilaya = WILAYAS.find(w => w.code === location);
+        if (matchedWilaya) {
+          setSelectedWilayas(prev => [...new Set([...prev, matchedWilaya.code])]);
+          setShowFilters(true);
+        }
+      }
+
+      // If high confidence, maybe clear purely textual search to show all sector data?
+      // For now, keep it, but maybe optimize user experience later.
+
     } catch (error) {
       console.error("Smart Search failed:", error);
     } finally {
