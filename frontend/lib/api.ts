@@ -1,6 +1,6 @@
 // API client for Boussole backend
-// Hardcoded for debugging
-const API_BASE_URL = "https://boussole-backend.up.railway.app";
+// Hardcoded for debugging (CORRECTED URL)
+const API_BASE_URL = "https://boussole-production.up.railway.app";
 // const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 console.log("DEBUG: API_BASE_URL is:", API_BASE_URL);
 
