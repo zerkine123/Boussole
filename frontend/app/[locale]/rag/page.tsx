@@ -7,7 +7,7 @@ import { Bot, Send, User, Sparkles, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useState, useRef, useEffect } from "react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+import api from "@/lib/api";
 
 interface ChatMessage {
     role: "user" | "assistant";
@@ -66,20 +66,9 @@ export default function RagPage() {
                 content: m.content,
             }));
 
-            const response = await fetch(`${API_BASE_URL}/api/v1/chat/completion`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    message: content.trim(),
-                    history,
-                }),
-            });
+            const data = await api.chatCompletion(content.trim(), history);
 
-            if (!response.ok) {
-                throw new Error(`API error: ${response.status}`);
-            }
-
-            const data = await response.json();
+            // Response is already parsed by api.ts
 
             const assistantMessage: ChatMessage = {
                 role: "assistant",
@@ -265,8 +254,8 @@ export default function RagPage() {
                                     )}
                                     <div
                                         className={`max-w-[80%] rounded-2xl px-4 py-3 ${msg.role === "user"
-                                                ? "bg-primary text-white rounded-br-md"
-                                                : "bg-gray-100 text-foreground rounded-bl-md"
+                                            ? "bg-primary text-white rounded-br-md"
+                                            : "bg-gray-100 text-foreground rounded-bl-md"
                                             }`}
                                     >
                                         <div className="text-sm leading-relaxed whitespace-pre-wrap">

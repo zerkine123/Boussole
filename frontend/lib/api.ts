@@ -292,6 +292,18 @@ export const api = {
     );
     return handleResponse(response);
   },
+  // Chat endpoints
+  async chatCompletion(
+    message: string,
+    history: { role: "user" | "assistant"; content: string }[],
+  ) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/chat/completion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ message, history }),
+    });
+    return handleResponse<{ reply: string }>(response);
+  },
 };
 
 export default api;
