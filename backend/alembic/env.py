@@ -18,6 +18,18 @@ from app.core.config import settings
 # access to the values within the .ini file in use.
 config = context.config
 
+# --------------------------------------------------------
+# Fix for Deployment: Override sqlalchemy.url from settings
+# --------------------------------------------------------
+# Alembic needs a synchronous driver (psycopg2), but our settings
+# use an asynchronous driver (asyncpg). We need to convert it.
+db_url = settings.DATABASE_URL
+if db_url and db_url.startswith("postgresql+asyncpg://"):
+    db_url = db_url.replace("postgresql+asyncpg://", "postgresql://")
+
+config.set_main_option("sqlalchemy.url", db_url)
+# --------------------------------------------------------
+
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.
 if config.config_file_name is not None:
