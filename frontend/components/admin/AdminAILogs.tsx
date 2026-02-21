@@ -30,7 +30,7 @@ interface IntentLog {
     created_at: string;
 }
 
-export function AdminAILogs() {
+export default function AdminAILogs() {
     const [logs, setLogs] = useState<IntentLog[]>([]);
     const [loading, setLoading] = useState(true);
 

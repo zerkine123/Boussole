@@ -30,7 +30,7 @@ interface AIProviderConfig {
     updated_at: string;
 }
 
-export function AdminAIProviders() {
+export default function AdminAIProviders() {
     const [providers, setProviders] = useState<AIProviderConfig[]>([]);
     const [loading, setLoading] = useState(true);
     const [isAddOpen, setIsAddOpen] = useState(false);

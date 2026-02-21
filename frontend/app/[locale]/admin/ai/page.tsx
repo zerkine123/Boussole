@@ -4,10 +4,10 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { BrainCircuit, Activity, DatabaseZap, Text } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdminAILogs } from "@/components/admin/AdminAILogs";
-import { AdminStaticIntents } from "@/components/admin/AdminStaticIntents";
-import { AdminSystemPrompts } from "@/components/admin/AdminSystemPrompts";
-import { AdminAIProviders } from "@/components/admin/AdminAIProviders";
+import AdminAILogs from "@/components/admin/AdminAILogs";
+import AdminStaticIntents from "@/components/admin/AdminStaticIntents";
+import AdminSystemPrompts from "@/components/admin/AdminSystemPrompts";
+import AdminAIProviders from "@/components/admin/AdminAIProviders";
 import { Settings } from "lucide-react";
 
 export default function AdminAIPage() {
