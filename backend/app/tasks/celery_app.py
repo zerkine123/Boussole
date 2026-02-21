@@ -12,6 +12,7 @@ celery_app = Celery(
     backend=settings.CELERY_RESULT_BACKEND,
     include=[
         "app.tasks.ingestion_tasks",
+        "app.tasks.insight_tasks",
     ]
 )
 
@@ -47,5 +48,11 @@ celery_app.conf.beat_schedule = {
     "refresh-cache-hourly": {
         "task": "app.tasks.ingestion_tasks.refresh_cache",
         "schedule": 3600.0,  # Every hour
+    },
+    
+    # Weekly insights generation
+    "generate-weekly-insights": {
+        "task": "app.tasks.insight_tasks.generate_weekly_insights",
+        "schedule": 604800.0,  # Every 7 days
     },
 }

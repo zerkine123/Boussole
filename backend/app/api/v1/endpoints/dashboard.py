@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from typing import List, Optional
+from pydantic import BaseModel
 
 from app.db.session import get_db
 from app.schemas.metric import (
@@ -16,6 +17,12 @@ from app.schemas.metric import (
 )
 from app.services.data_service import DataService
 from app.core.deps import get_current_user
+from app.models.user import User
+from app.models.sector import Sector
+from app.models.wilaya import Wilaya
+from app.services.llm_adapter import get_llm_adapter
+from app.schemas.widgets import DashboardLayoutResponse
+import json
 
 router = APIRouter()
 
@@ -209,3 +216,262 @@ async def get_dashboard_summary(
         "user_id": current_user.id,
         "user_email": current_user.email,
     }
+
+
+@router.get("/layout")
+async def get_dashboard_layout(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Dynamically generates the dashboard widget layout for the user based
+    on their onboarding preferences and stated intent using the LLM.
+    """
+    DEFAULT_LAYOUT = [
+        {
+            "component": "executive_snapshot",
+            "title": "Boussole Market Intelligence",
+            "summary_text": "AI indicates anomalous growth in the Agriculture tech sector due to recent tax subsidies.",
+            "key_metrics": [
+               {"label": "New Entrants", "value": "1,240", "trend": "up"},
+               {"label": "State Funding", "value": "2.4B DZD", "trend": "up"},
+               {"label": "Risk Score", "value": "Low", "trend": "down"},
+               {"label": "Market Saturation", "value": "12%", "trend": "none"}
+            ]
+        },
+        {
+            "component": "kpi_card",
+            "metric_slug": "total_companies",
+            "title": "Registered Businesses",
+            "trend_type": "up",
+            "filters": None
+        },
+        {
+            "component": "kpi_card",
+            "metric_slug": "active_jobs",
+            "title": "Active Job Offers",
+            "trend_type": "up",
+            "filters": None
+        },
+        {
+            "component": "line_chart",
+            "metric_slug": "total_companies",
+            "title": "Registration Growth over Time",
+            "group_by": "year",
+            "filters": None
+        },
+        {
+            "component": "bar_chart",
+            "metric_slug": "total_companies",
+            "title": "Companies by Sector",
+            "group_by": "sector",
+            "limit": 5,
+            "filters": None
+        },
+        {
+            "component": "data_table",
+            "metric_slug": "total_companies",
+            "title": "Regional Registration Breakdown",
+            "group_by": "wilaya",
+            "limit": 10,
+            "filters": None
+        },
+        {
+            "component": "insight_panel",
+            "insight_text": "Our AI expects a 15% jump in agricultural registrations in the southern wilayas based on the new 2024 government subsidies.",
+            "type": "opportunity",
+            "title": "AI Market Signal"
+        },
+        {
+            "component": "growth_indicator",
+            "metric_slug": "total_companies",
+            "title": "Company Registration Growth",
+            "filters": None
+        },
+        {
+            "component": "ranking_card",
+            "metric_slug": "total_companies",
+            "title": "Top Wilayas by Volume",
+            "group_by": "wilaya",
+            "filter_type": "top",
+            "limit": 5,
+            "filters": None
+        },
+        {
+            "component": "filter_panel",
+            "title": "Dashboard Controls",
+            "available_filters": ["sector", "wilaya", "year"]
+        }
+    ]
+    
+    preferences = current_user.preferences or {}
+    intent_text = preferences.get("intent_text", "")
+    sub_sectors = preferences.get("sub_sectors", [])
+    search_history = preferences.get("search_history", [])
+    
+    # If no intent or preferences are provided, return the default layout immediately
+    if not intent_text and not sub_sectors:
+        return {"layout": DEFAULT_LAYOUT}
+    
+    try:
+        adapter = await get_llm_adapter(db)
+        
+        schema_json = DashboardLayoutResponse.model_json_schema()
+        
+        system_prompt = (
+            "You are an intelligent dashboard orchestrator for Boussole, an Algerian Business Intelligence platform.\n"
+            "Your job is to recommend the optimal dashboard layout based on the user's intent AND search history.\n\n"
+            "AVAILABLE COMPONENTS TO CHOOSE FROM:\n"
+            "- kpi_card: Single metric volume.\n"
+            "- line_chart: Trend over time.\n"
+            "- bar_chart: Comparison across categories (e.g. sectors).\n"
+            "- choropleth_map: Geographic distribution.\n"
+            "- data_table: Raw tabular breakdown.\n"
+            "- ranking_card: Top or bottom performers.\n"
+            "- growth_indicator: Year-over-Year percentage jumps.\n"
+            "- insight_panel: AI-written text summary or warning.\n"
+            "- pie_chart: Market share or composition.\n"
+            "- stacked_area_chart: Hierarchical trends over time.\n"
+            "- radar_chart: Performance profile across multiple axises.\n"
+            "- composed_chart: Dual metric comparison (e.g. Bar vs Line).\n"
+            "- scatter_plot: Correlation analysis between 2 metrics.\n"
+            "- treemap: Deep hierarchical breakdowns.\n"
+            "- funnel_chart: Sequential pipeline or conversion flow.\n"
+            "- comparison_card: Head-to-Head VS matchup between two entities.\n"
+            "- gauge_card: Target completion tracking.\n"
+            "- metric_grid: Dense 2x2 grid of 4 top-level KPIs.\n"
+            "- sentiment_timeline: Historical timeline of events or milestones.\n\n"
+            "VALID METRIC SLUGS (you MUST ONLY use these):\n"
+            "total_companies, active_jobs, total_investment, active_projects, jobs_created,\n"
+            "revenue, exports, startups, incubators, patents, production, market_share,\n"
+            "employment_rate, growth_rate, population\n\n"
+            "VALID SECTOR SLUGS FOR FILTERS:\n"
+            "agriculture, energy, manufacturing, services, tourism, innovation, consulting,\n"
+            "housing, education, health, technology, construction, transport, commerce\n\n"
+            "RULES:\n"
+            "1. You MUST return ONLY a valid JSON object matching the JSON schema provided below.\n"
+            "2. Select 4 to 6 widgets that best match the user's intent, utilizing the advanced charts where highly relevant.\n"
+            "3. DO NOT invent metric slugs. ONLY use the ones listed above.\n"
+            "4. The frontend registry will use your configuration to fetch real data from the database.\n"
+            "5. If a user searched for something recently (e.g. 'agriculture in south'), ensure you pass `sector_slug` or `wilaya_code` inside the widget filters!\n\n"
+            f"REQUIRED JSON SCHEMA:\n{schema_json}\n"
+        )
+        
+        user_prompt = (
+            f"User Intent: {intent_text}\n"
+            f"Interest Sub-sectors: {', '.join(sub_sectors) if sub_sectors else 'None specified'}\n"
+            f"Recent Search History: {', '.join(search_history) if search_history else 'No recent searches'}\n\n"
+            "Generate the JSON layout object."
+        )
+        
+        response = await adapter.complete(system_prompt=system_prompt, user_prompt=user_prompt)
+        
+        # Clean potential markdown wrappers
+        clean_response = response.strip()
+        if clean_response.startswith("```json"):
+            clean_response = clean_response.replace("```json", "", 1).replace("```", "").strip()
+        elif clean_response.startswith("```"):
+            clean_response = clean_response.replace("```", "", 1).replace("```", "").strip()
+        import json
+        try:
+            parsed_json = json.loads(clean_response)
+            validated = DashboardLayoutResponse(**parsed_json)
+            return validated.model_dump()
+        except Exception as json_err:
+            print(f"Failed to parse LLM JSON: {json_err}")
+            print(f"RAW LLM RESPONSE: {clean_response}")
+            
+            # Fallback layout
+            return {
+                "layout": [
+                    {
+                        "component": "kpi_card",
+                        "metric_slug": "total_companies",
+                        "title": "Total Entities",
+                        "trend_type": "up",
+                        "filters": None
+                    }
+                ]
+            }
+            
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to generate AI layout: {str(e)}")
+        # Silent fallback to default layout on LLM failure
+        return {"layout": []}
+
+
+class GenerateLayoutRequest(BaseModel):
+    query: str
+
+@router.post("/layout/generate")
+async def generate_ondemand_layout(
+    request: GenerateLayoutRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    On-demand layout generation for the Data Explorer.
+    Translates free-text queries into a structured UI layout using 21 widget types.
+    """
+    try:
+        adapter = await get_llm_adapter(db)
+        schema_json = DashboardLayoutResponse.model_json_schema()
+        
+        system_prompt = (
+            "You are an intelligent data explorer orchestrator for Boussole, an Algerian Business Intelligence platform.\n"
+            "Your job is to translate a user's free-text data query into the optimal analytical dashboard layout.\n\n"
+            "AVAILABLE COMPONENTS TO CHOOSE FROM:\n"
+            "- kpi_card: Single metric volume.\n"
+            "- line_chart: Trend over time.\n"
+            "- bar_chart: Comparison across categories (e.g. sectors or wilayas).\n"
+            "- choropleth_map: Geographic distribution across Algeria.\n"
+            "- data_table: Raw tabular breakdown.\n"
+            "- ranking_card: Top or bottom performers.\n"
+            "- growth_indicator: Year-over-Year percentage jumps.\n"
+            "- insight_panel: AI-written text summary or warning.\n"
+            "- pie_chart: Market share or composition.\n"
+            "- stacked_area_chart: Hierarchical trends over time.\n"
+            "- radar_chart: Performance profile across multiple axises.\n"
+            "- composed_chart: Dual metric comparison (e.g. Bar vs Line).\n"
+            "- scatter_plot: Correlation analysis between metrics.\n"
+            "- treemap: Deep hierarchical breakdowns.\n"
+            "- funnel_chart: Sequential pipeline or conversion flow.\n"
+            "- comparison_card: Head-to-Head VS matchup between two entities.\n"
+            "- gauge_card: Target completion tracking.\n"
+            "- metric_grid: Dense 2x2 grid of 4 top-level KPIs.\n"
+            "- sentiment_timeline: Historical timeline of events or milestones.\n\n"
+            "VALID METRIC SLUGS (you MUST ONLY use these):\n"
+            "total_companies, active_jobs, total_investment, active_projects, jobs_created,\n"
+            "revenue, exports, startups, incubators, patents, production, market_share,\n"
+            "employment_rate, growth_rate, population\n\n"
+            "VALID SECTOR SLUGS FOR FILTERS:\n"
+            "agriculture, energy, manufacturing, services, tourism, innovation, consulting,\n"
+            "housing, education, health, technology, construction, transport, commerce\n\n"
+            "RULES:\n"
+            "1. You MUST return ONLY a valid JSON object matching the JSON schema provided below.\n"
+            "2. Select 3 to 6 widgets that perfectly answer the user's inquiry.\n"
+            "3. DO NOT invent metric slugs. ONLY use the ones listed above.\n"
+            "4. If the user mentions a specific sector or wilaya, strictly pass it inside the widget filters!\n\n"
+            f"REQUIRED JSON SCHEMA:\n{schema_json}\n"
+        )
+        
+        user_prompt = f"User Query: {request.query}\n\nGenerate the JSON layout object representing the answer."
+        
+        response = await adapter.complete(system_prompt=system_prompt, user_prompt=user_prompt)
+        
+        clean_response = response.strip()
+        if clean_response.startswith("```json"):
+            clean_response = clean_response.replace("```json", "", 1).replace("```", "").strip()
+        elif clean_response.startswith("```"):
+            clean_response = clean_response.replace("```", "", 1).replace("```", "").strip()
+            
+        import json
+        parsed_json = json.loads(clean_response)
+        validated = DashboardLayoutResponse(**parsed_json)
+        return validated.model_dump()
+        
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to generate on-demand layout: {str(e)}")
+        raise HTTPException(status_code=500, detail="Failed to synthesize analysis layout. Please try again.")

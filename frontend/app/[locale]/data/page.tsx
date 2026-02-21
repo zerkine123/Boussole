@@ -1,841 +1,413 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { useState, useEffect, useMemo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useTranslations, useLocale } from "next-intl";
+import { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardDescription,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
-import {
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
-import { useLocale } from "next-intl";
-import {
-  Download,
-  Filter,
-  RefreshCw,
-  ChevronDown,
-  ChevronUp,
-  Search,
-  FileText,
-  Database,
-  Calendar,
-  MapPin,
+  Search, Sparkles, Loader2, X, ArrowRight, FileDown,
+  SlidersHorizontal, Calendar, Building2, MapPin, ChevronDown, RotateCcw
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import DashboardLayout from "@/components/DashboardLayout";
-import DynamicDataView from "@/components/DynamicDataView";
-import { Sparkles } from "lucide-react";
-import { api } from "@/lib/api";
 
-// Algeria Wilayas
-const WILAYAS = [
-  { code: "01", name: "Algiers", name_fr: "Alger", name_ar: "الجزائر" },
-  { code: "02", name: "Oran", name_fr: "Oran", name_ar: "وهران" },
-  { code: "03", name: "Constantine", name_fr: "Constantine", name_ar: "قسنطينة" },
-  { code: "04", name: "Setif", name_fr: "Sétif", name_ar: "سطيف" },
-  { code: "05", name: "Batna", name_fr: "Batna", name_ar: "باتنة" },
-  { code: "06", name: "Annaba", name_fr: "Annaba", name_ar: "عنابة" },
-  { code: "07", name: "Skikda", name_fr: "Skikda", name_ar: "سكيكدة" },
-  { code: "08", name: "Tlemcen", name_fr: "Tlemcen", name_ar: "تلمسان" },
-  { code: "09", name: "Tizi Ouzou", name_fr: "Tizi Ouzou", name_ar: "تيزي وزو" },
-  { code: "10", name: "Béjaïa", name_fr: "Béjaïa", name_ar: "بجاية" },
-  { code: "11", name: "Biskra", name_fr: "Biskra", name_ar: "بسكرة" },
-  { code: "12", name: "Boumerdès", name_fr: "Boumerdès", name_ar: "بومرداس" },
-  { code: "13", name: "Tebessa", name_fr: "Tébessa", name_ar: "تبسة" },
-  { code: "14", name: "Ouargla", name_fr: "Ouargla", name_ar: "ورقلة" },
-];
+import DashboardLayout from "@/components/DashboardLayout";
+import { WidgetRenderer } from "@/components/widgets/WidgetRegistry";
+import { api } from "@/lib/api";
+import { DashboardFilterProvider } from "@/lib/DashboardFilterContext";
+import { generateExplorerPDF } from "@/components/ExplorerPDFExport";
 
 const SECTORS = [
-  { id: "agriculture", name: "Agriculture", name_fr: "Agriculture", name_ar: "الزراعة" },
-  { id: "energy", name: "Energy", name_fr: "Énergie", name_ar: "الطاقة" },
-  { id: "manufacturing", name: "Manufacturing", name_fr: "Industrie", name_ar: "الصناعة" },
-  { id: "services", name: "Services", name_fr: "Services", name_ar: "الخدمات" },
-  { id: "tourism", name: "Tourism", name_fr: "Tourisme", name_ar: "السياحة" },
-  { id: "innovation", name: "Innovation", name_fr: "Innovation", name_ar: "الابتكار" },
-  { id: "consulting", name: "Consulting", name_fr: "Conseil", name_ar: "الاستشارات" },
+  "All Sectors", "Agriculture", "Energy", "Manufacturing", "Services",
+  "Tourism", "Innovation", "Consulting", "Housing", "Education",
+  "Health", "Technology", "Construction", "Transport", "Commerce",
 ];
 
-const METRICS = [
-  { id: "gdp", name: "GDP", name_fr: "PIB", name_ar: "الناتج المحلي الإجمالي" },
-  { id: "population", name: "Population", name_fr: "Population", name_ar: "السكان" },
-  { id: "employment", name: "Employment", name_fr: "Emploi", name_ar: "التشغيل" },
-  { id: "investment", name: "Investment", name_fr: "Investissement", name_ar: "الاستثمار" },
-  { id: "production", name: "Production", name_fr: "Production", name_ar: "الإنتاج" },
-  { id: "entities", name: "Registered Entities", name_fr: "Entités immatriculées", name_ar: "الكيانات المسجلة" },
-  { id: "incubators", name: "Incubators", name_fr: "Incubateurs", name_ar: "حاضنات الأعمال" },
-  { id: "projects", name: "Startup Projects", name_fr: "Projets Startup", name_ar: "مشاريع ناشئة" },
+const YEARS = ["All Years", "2024", "2023", "2022", "2021", "2020", "2019", "2018"];
+
+const WILAYAS = [
+  "All Wilayas", "Algiers", "Oran", "Constantine", "Annaba", "Sétif",
+  "Batna", "Béjaïa", "Tizi Ouzou", "Blida", "Boumerdès",
 ];
 
-interface DataPoint {
-  id: string;
-  wilaya: string;
-  wilayaName: string;
-  sector: string;
-  sectorName: string;
-  metric: string;
-  metricName: string;
-  year: number;
-  value: number;
-  unit: string;
-}
-
-interface SearchIntent {
-  intent: string;
-  topic?: string;
-  subtopic?: string;
-  location?: string;
-  filters?: Record<string, any>;
-  confidence: number;
-}
-
-interface SearchAnalysisResponse {
-  original_query: string;
-  analysis: SearchIntent;
-}
+const SUGGESTIONS = [
+  "Compare Agriculture and Tech startups in Algiers vs Oran",
+  "Show me the growth timeline of incubators across Algeria",
+  "What is the pipeline conversion rate for manufacturing?",
+  "Give me an executive snapshot of the renewable energy sector",
+];
 
 export default function DataExplorerPage() {
   const t = useTranslations("dataExplorer");
   const locale = useLocale();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const [data, setData] = useState<DataPoint[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [selectedSectors, setSelectedSectors] = useState<string[]>([]);
-  const [selectedWilayas, setSelectedWilayas] = useState<string[]>([]);
-  const [selectedMetrics, setSelectedMetrics] = useState<string[]>([]);
-  const [yearRange, setYearRange] = useState({ start: 2015, end: 2024 });
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortColumn, setSortColumn] = useState<string>("");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [exportFormat, setExportFormat] = useState<"csv" | "excel" | "pdf">("csv");
-  const [isExporting, setIsExporting] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dynamicQuery, setDynamicQuery] = useState<string | null>(null);
+  const [activeQuery, setActiveQuery] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [layoutParams, setLayoutParams] = useState<any[]>([]);
+  const chartContainerRef = useRef<HTMLDivElement>(null);
 
-  // Auto-fill from URL search params (universal search router)
+  // Customization filters
+  const [selectedSector, setSelectedSector] = useState("All Sectors");
+  const [selectedYear, setSelectedYear] = useState("All Years");
+  const [selectedWilaya, setSelectedWilaya] = useState("All Wilayas");
+  const [showFilters, setShowFilters] = useState(false);
+
+  // Are we in results mode?
+  const hasResults = !isGenerating && layoutParams.length > 0 && !!activeQuery;
+
   useEffect(() => {
     const q = searchParams.get("q");
-    const sector = searchParams.get("sector");
-    const location = searchParams.get("location");
-
-    // If there's a search query, always trigger AI dynamic view
-    if (q) {
-      setDynamicQuery(q);
-      return;
-    }
-
-    // Standard URL filters (if clicked from dashboard badges without query)
-    if (sector && SECTORS.some((s) => s.id === sector)) {
-      setSelectedSectors([sector]);
-      setShowFilters(true);
-    }
-    if (location && WILAYAS.some((w) => w.code === location)) {
-      setSelectedWilayas([location]);
-      setShowFilters(true);
+    if (q && q !== activeQuery) {
+      setSearchQuery(q);
+      handleGenerateLayout(q);
     }
   }, [searchParams]);
 
-  const analyzeSearchQuery = async (query: string) => {
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleGenerateLayout(searchQuery);
+    }
+  };
+
+  const handleGenerateLayout = async (queryToRun: string) => {
+    if (!queryToRun.trim()) return;
+    setIsGenerating(true);
+    setError(null);
+    setActiveQuery(queryToRun);
     try {
-      // 1. Set text query immediately for feedback
-      setSearchQuery(query);
-      setIsLoading(true);
-
-      // 2. Call Backend API
-      const token = localStorage.getItem("access_token"); // Optional: if protected
-      const data: SearchAnalysisResponse = await api.analyzeSearch(token, query);
-
-      const { topic, location, subtopic, intent } = data.analysis;
-
-      // 3. Apply Filters based on AI Analysis
-      if (topic) {
-        // Map topic to sector ID
-        const matchedSector = SECTORS.find(s => s.id === topic || s.name.toLowerCase().includes(topic));
-        if (matchedSector) {
-          setSelectedSectors(prev => [...new Set([...prev, matchedSector.id])]);
-          setShowFilters(true);
-        }
+      const token = localStorage.getItem("access_token");
+      const response = await api.generateDashboardLayout(token, queryToRun);
+      if (response && response.layout) {
+        setLayoutParams(response.layout);
+      } else {
+        setLayoutParams([]);
+        setError("Failed to construct a comprehensive layout from your query.");
       }
-
-      if (location) {
-        const matchedWilaya = WILAYAS.find(w => w.code === location);
-        if (matchedWilaya) {
-          setSelectedWilayas(prev => [...new Set([...prev, matchedWilaya.code])]);
-          setShowFilters(true);
-        }
+    } catch (err: any) {
+      console.error("AI Layout Generation error:", err);
+      if (err.statusCode === 401 || err.statusCode === 403) {
+        setError("Please log in to use the Data Explorer.");
+      } else {
+        setError(err.message || "Failed to analyze data request. Please try again.");
       }
-
-      // If high confidence, maybe clear purely textual search to show all sector data?
-      // For now, keep it, but maybe optimize user experience later.
-
-    } catch (error) {
-      console.error("Smart Search failed:", error);
+      setLayoutParams([]);
     } finally {
-      setIsLoading(false);
+      setIsGenerating(false);
     }
   };
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    setIsLoading(true);
-    setError("");
-
-    try {
-      // Simulate network delay
-      await new Promise((resolve) => setTimeout(resolve, 600));
-
-      const mockData: DataPoint[] = [];
-      const sectorsList = selectedSectors.length > 0 ? selectedSectors : SECTORS.map((s) => s.id);
-      const wilayasList = selectedWilayas.length > 0 ? selectedWilayas : WILAYAS.map((w) => w.code);
-      const metricsList = selectedMetrics.length > 0 ? selectedMetrics : METRICS.map((m) => m.id);
-
-      let id = 1;
-
-      // Generation logic based on Boussole Presentation Data
-      // Total Businesses: ~2.4M (Entities)
-      // Startups: ~8,000 (Projects)
-      // Incubators: 192
-      // Consulting: ~5,000
-
-      // Multipliers for realistic distribution
-      const wilayaWeights: Record<string, number> = {
-        "01": 0.15, // Algiers (High)
-        "02": 0.08, // Oran
-        "03": 0.06, // Constantine
-        "04": 0.05, // Setif
-        "14": 0.04, // Ouargla (Energy)
-        "13": 0.03, // Tebessa
-        "07": 0.04, // Biskra (Agriculture)
-      };
-
-      for (const sector of sectorsList) {
-        for (const wilaya of wilayasList) {
-          const wObj = WILAYAS.find((w) => w.code === wilaya);
-          if (!wObj) continue;
-
-          const weight = wilayaWeights[wilaya] || 0.015; // Default weight for others
-          const isMajorCity = ["01", "02", "03", "04"].includes(wilaya);
-
-          for (const metric of metricsList) {
-            for (let year = yearRange.start; year <= yearRange.end; year++) {
-              let computedValue = 0;
-              let unit = "units";
-
-              // Logic per metric and sector
-              if (metric === "entities") {
-                // PDF: 2.4M total entities
-                // ~2.1M Individuals + ~274k Companies
-                const totalEntities = 2400000;
-                computedValue = Math.round(totalEntities * weight * (1 + (year - 2020) * 0.03));
-              }
-              else if (metric === "incubators") {
-                // PDF: 192 official incubators
-                if (sector === "innovation") {
-                  const totalIncubators = 192;
-                  // Heavily skewed to major cities
-                  const incubatorWeight = isMajorCity ? weight * 2 : weight * 0.5;
-                  computedValue = Math.round(totalIncubators * incubatorWeight);
-                  if (computedValue < 1 && isMajorCity) computedValue = 1;
-                } else {
-                  computedValue = 0;
-                }
-              }
-              else if (metric === "projects" && sector === "innovation") {
-                // PDF: ~8000 startups, ~2500 labeled
-                const totalStartups = 8000;
-                computedValue = Math.round(totalStartups * weight * (1 + (year - 2024) * 0.1)); // High growth
-              }
-              else if (sector === "consulting" && metric === "entities") {
-                // PDF: ~5000 consulting agencies
-                const totalConsulting = 5000;
-                computedValue = Math.round(totalConsulting * weight);
-              }
-              else if (sector === "agriculture" && metric === "production") {
-                // PDF: 12% growth in 2024
-                const baseProd = 50000; // Arbitrary base for tonnes/units
-                const growth = year >= 2024 ? 1.12 : 1.02;
-                computedValue = Math.round(baseProd * weight * Math.pow(growth, year - 2015));
-                unit = "tonnes";
-              }
-              else if (metric === "gdp") {
-                computedValue = Math.round(5000 * weight * (year - 2000)); // Rough GDP proxy
-                unit = "M DZD";
-              }
-              else {
-                // Fallback random
-                computedValue = Math.round(Math.random() * 10000);
-              }
-
-              // Ensure no duplicates or weird zeros
-              if (computedValue < 0) computedValue = 0;
-
-              const sectorObj = SECTORS.find((s) => s.id === sector);
-              const metricObj = METRICS.find((m) => m.id === metric);
-
-              mockData.push({
-                id: String(id++),
-                wilaya,
-                wilayaName: wObj.name,
-                sector,
-                sectorName: sectorObj?.name || sector,
-                metric,
-                metricName: metricObj?.name || metric,
-                year,
-                value: computedValue,
-                unit: metric === "gdp" || metric === "investment" ? "M DZD" : unit,
-              });
-            }
-          }
-        }
-      }
-      setData(mockData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load data");
-    } finally {
-      setIsLoading(false);
-    }
+  const clearSearch = () => {
+    setSearchQuery("");
+    setActiveQuery("");
+    setLayoutParams([]);
+    setError(null);
+    setSelectedSector("All Sectors");
+    setSelectedYear("All Years");
+    setSelectedWilaya("All Wilayas");
+    router.replace(`/${locale}/data`, undefined);
   };
 
-  const filteredAndSortedData = useMemo(() => {
-    let result = [...data];
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(
-        (d) =>
-          d.wilayaName.toLowerCase().includes(q) ||
-          d.sectorName.toLowerCase().includes(q) ||
-          d.metricName.toLowerCase().includes(q)
-      );
-    }
-
-    if (sortColumn) {
-      result.sort((a, b) => {
-        const aValue = a[sortColumn as keyof DataPoint];
-        const bValue = b[sortColumn as keyof DataPoint];
-        if (typeof aValue === "number" && typeof bValue === "number") {
-          return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
-        }
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return sortDirection === "asc" ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
-        }
-        return 0;
-      });
-    }
-    return result;
-  }, [data, sortColumn, sortDirection, searchQuery]);
-
-  const handleSort = (columnId: string) => {
-    if (sortColumn === columnId) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortColumn(columnId);
-      setSortDirection("asc");
-    }
-  };
-
-  const handleExport = async () => {
-    setIsExporting(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      alert(`${t("export.success")}`);
-    } catch (err) {
-      alert(t("export.error"));
-    } finally {
-      setIsExporting(false);
-    }
-  };
-
-  const toggleSector = (sectorId: string) => {
-    setSelectedSectors((prev) => prev.includes(sectorId) ? prev.filter((id) => id !== sectorId) : [...prev, sectorId]);
-  };
-
-  const toggleWilaya = (wilayaCode: string) => {
-    setSelectedWilayas((prev) => prev.includes(wilayaCode) ? prev.filter((c) => c !== wilayaCode) : [...prev, wilayaCode]);
-  };
-
-  const toggleMetric = (metricId: string) => {
-    setSelectedMetrics((prev) => prev.includes(metricId) ? prev.filter((id) => id !== metricId) : [...prev, metricId]);
-  };
-
-  const clearFilters = () => {
-    setSelectedSectors([]);
-    setSelectedWilayas([]);
-    setSelectedMetrics([]);
-    setYearRange({ start: 2015, end: 2024 });
-  };
-
-  const getWilayaName = (wilaya: string) => {
-    const obj = WILAYAS.find((w) => w.code === wilaya);
-    if (locale === "fr") return obj?.name_fr || wilaya;
-    if (locale === "ar") return obj?.name_ar || wilaya;
-    return obj?.name || wilaya;
-  };
-
-  const getSectorName = (sector: string) => {
-    const obj = SECTORS.find((s) => s.id === sector);
-    if (locale === "fr") return obj?.name_fr || sector;
-    if (locale === "ar") return obj?.name_ar || sector;
-    return obj?.name || sector;
-  };
-
-  const getMetricName = (metric: string) => {
-    const obj = METRICS.find((m) => m.id === metric);
-    if (locale === "fr") return obj?.name_fr || metric;
-    if (locale === "ar") return obj?.name_ar || metric;
-    return obj?.name || metric;
+  const suggestQuery = (q: string) => {
+    setSearchQuery(q);
+    handleGenerateLayout(q);
   };
 
   return (
-    <DashboardLayout>
-      {/* Banner Header */}
-      <div className="banner-gradient relative overflow-hidden">
-        <div className="absolute inset-0">
-          <div className="absolute top-[20%] left-[10%] w-48 h-48 bg-white/5 rounded-full blur-3xl" />
-          <div className="absolute top-[40%] right-[15%] w-36 h-36 bg-white/8 rounded-full blur-3xl" />
-        </div>
-        <div className="relative px-8 py-8">
-          <p className="text-sm text-white/70 mb-1">📊 Data / Overview</p>
-          <h1 className="text-2xl font-bold text-white">
-            {t("title")}{" "}
-            <span className="text-white/60 font-normal text-lg">
-              {filteredAndSortedData.length.toLocaleString()}
-            </span>
-          </h1>
-        </div>
-      </div>
+    <DashboardFilterProvider>
+      <DashboardLayout>
 
-      {/* Content */}
-      <div className="px-8 py-8 space-y-6">
-        {/* Search & Actions Bar */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Search */}
-              <div className="relative flex-1 min-w-[200px] max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  placeholder={"AI Search: e.g. greenhouses in Algiers..."}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && searchQuery.trim()) {
-                      setDynamicQuery(searchQuery.trim());
+        {/* ── HERO BANNER ─────────────────────────────────────────────────
+            Two states:
+            1. Idle  → tall, centered, decorative
+            2. Active → compact toolbar strip
+        ─────────────────────────────────────────────────────────────── */}
+        <div
+          className={`bg-primary/95 relative overflow-hidden transition-all duration-500 ease-in-out
+            ${hasResults || isGenerating ? "shadow-lg" : "shadow-sm"}`}
+        >
+          {/* Decorative blobs – fade out in compact mode */}
+          <div
+            className={`absolute inset-0 pointer-events-none transition-opacity duration-500
+              ${hasResults || isGenerating ? "opacity-0" : "opacity-100"}`}
+          >
+            <div className="absolute top-[20%] left-[10%] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute top-[40%] right-[15%] w-36 h-36 bg-accent/20 rounded-full blur-3xl" />
+          </div>
+
+          {/* ── IDLE STATE (full hero) ─────────────────────────── */}
+          {!hasResults && !isGenerating && (
+            <div className="relative px-4 sm:px-8 py-10 sm:py-16 text-center animate-in fade-in duration-300">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-white mb-4 tracking-tight">
+                Boussole <span className="text-accent">Data Explorer</span>
+              </h1>
+              <p className="max-w-xl mx-auto text-base sm:text-lg text-white/80 mb-8 leading-relaxed">
+                Describe the insights you're looking for. Our AI synthesizes,
+                aggregates, and renders the perfect real-time charts instantly.
+              </p>
+
+              {/* Big Search Bar */}
+              <div className="max-w-2xl mx-auto relative group">
+                <div className="absolute -inset-1 bg-gradient-to-r from-accent/20 via-white/20 to-accent/20 rounded-2xl blur-md opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+                <div className="relative flex items-center bg-white/10 backdrop-blur-md border border-white/30 rounded-2xl overflow-hidden shadow-2xl group-focus-within:border-white/50 group-focus-within:bg-white/15 transition-all duration-300">
+                  <Sparkles className="h-5 w-5 text-accent ml-5 shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    placeholder="E.g. Compare total companies in Oran vs Setif..."
+                    className="flex-1 h-14 sm:h-16 px-4 text-base sm:text-lg bg-transparent text-white placeholder:text-white/60 focus:outline-none"
+                  />
+                  <button
+                    onClick={() => handleGenerateLayout(searchQuery)}
+                    disabled={!searchQuery.trim()}
+                    className="h-10 sm:h-12 px-5 sm:px-6 mr-2 rounded-xl bg-white text-primary text-sm sm:text-base font-bold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shrink-0 flex items-center gap-2"
+                  >
+                    Explore
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── GENERATING STATE (compact, spinner) ───────────── */}
+          {isGenerating && (
+            <div className="relative px-4 sm:px-8 py-5 flex items-center gap-4 animate-in fade-in duration-200">
+              <Loader2 className="w-5 h-5 text-accent animate-spin shrink-0" />
+              <div className="flex-1 relative group">
+                <div className="flex items-center bg-white/10 backdrop-blur-md border border-white/30 rounded-xl overflow-hidden px-4 h-11">
+                  <Sparkles className="h-4 w-4 text-accent mr-3 shrink-0" />
+                  <span className="text-white/80 text-sm truncate">{searchQuery}</span>
+                </div>
+              </div>
+              <span className="text-white/70 text-sm shrink-0">Synthesizing...</span>
+            </div>
+          )}
+
+          {/* ── RESULTS STATE (compact toolbar) ───────────────── */}
+          {hasResults && (
+            <div className="relative animate-in fade-in slide-in-from-top-2 duration-300">
+              {/* Top row: search bar + actions */}
+              <div className="px-4 sm:px-6 py-3 flex items-center gap-3">
+                {/* Compact search input */}
+                <div className="flex-1 flex items-center bg-white/10 backdrop-blur-md border border-white/25 rounded-xl overflow-hidden h-11 group focus-within:border-white/50 transition-all">
+                  <Sparkles className="h-4 w-4 text-accent ml-4 shrink-0" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearchKeyDown}
+                    placeholder="Refine your query..."
+                    className="flex-1 px-3 h-full bg-transparent text-white text-sm placeholder:text-white/50 focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button onClick={clearSearch} className="p-2 text-white/60 hover:text-white transition-colors">
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleGenerateLayout(searchQuery)}
+                    disabled={!searchQuery.trim()}
+                    className="h-full px-4 bg-white/15 hover:bg-white/25 text-white text-sm font-semibold border-l border-white/20 transition-all disabled:opacity-40 shrink-0 flex items-center gap-1.5"
+                  >
+                    <Search className="h-3.5 w-3.5" />
+                    Search
+                  </button>
+                </div>
+
+                {/* Filter toggle */}
+                <button
+                  onClick={() => setShowFilters(f => !f)}
+                  className={`flex items-center gap-2 px-3.5 h-11 rounded-xl text-sm font-medium border transition-all shrink-0
+                    ${showFilters
+                      ? "bg-white text-primary border-white"
+                      : "bg-white/10 text-white border-white/25 hover:bg-white/20"
+                    }`}
+                >
+                  <SlidersHorizontal className="h-4 w-4" />
+                  <span className="hidden sm:inline">Filters</span>
+                  {(selectedSector !== "All Sectors" || selectedYear !== "All Years" || selectedWilaya !== "All Wilayas") && (
+                    <span className="w-2 h-2 bg-accent rounded-full" />
+                  )}
+                </button>
+
+                {/* PDF Export */}
+                <button
+                  onClick={async () => {
+                    setIsExporting(true);
+                    try {
+                      await generateExplorerPDF({ query: activeQuery, layoutWidgets: layoutParams, chartContainerRef });
+                    } catch (err) {
+                      console.error("PDF export failed:", err);
+                    } finally {
+                      setIsExporting(false);
                     }
                   }}
-                  className="w-full h-9 pl-9 pr-4 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all"
-                />
-              </div>
-
-              <Button
-                size="sm"
-                onClick={() => {
-                  if (searchQuery.trim()) setDynamicQuery(searchQuery.trim());
-                }}
-                disabled={!searchQuery.trim()}
-                className="bg-gradient-to-r from-primary to-emerald-600 text-white hover:from-primary/90 hover:to-emerald-600/90"
-              >
-                <Sparkles className="h-4 w-4 mr-1.5" />
-                AI Search
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowFilters(!showFilters)}
-              >
-                <Filter className="h-4 w-4 mr-1.5" />
-                {t("filters.title")}
-                {showFilters ? (
-                  <ChevronUp className="h-3.5 w-3.5 ml-1" />
-                ) : (
-                  <ChevronDown className="h-3.5 w-3.5 ml-1" />
-                )}
-              </Button>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchData}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 mr-1.5 ${isLoading ? "animate-spin" : ""}`} />
-                {t("refresh")}
-              </Button>
-
-              <div className="ml-auto flex items-center gap-2">
-                <Select value={exportFormat} onValueChange={(value: any) => setExportFormat(value)}>
-                  <SelectTrigger className="w-28 h-8 text-xs bg-white rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="csv">CSV</SelectItem>
-                    <SelectItem value="excel">Excel</SelectItem>
-                    <SelectItem value="pdf">PDF</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  size="sm"
-                  onClick={handleExport}
-                  disabled={isExporting || filteredAndSortedData.length === 0}
+                  disabled={isExporting}
+                  className="flex items-center gap-2 px-3.5 h-11 rounded-xl bg-accent text-primary text-sm font-bold hover:bg-accent/90 disabled:opacity-50 transition-all shadow-md shrink-0"
                 >
-                  {isExporting ? (
-                    <RefreshCw className="h-4 w-4 mr-1.5 animate-spin" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-1.5" />
-                  )}
-                  {t("export.button")}
-                </Button>
+                  {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <FileDown className="w-4 h-4" />}
+                  <span className="hidden sm:inline">{isExporting ? "Exporting..." : "Report"}</span>
+                </button>
+
+                {/* Reset */}
+                <button
+                  onClick={clearSearch}
+                  title="Clear results"
+                  className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 text-white/70 hover:text-white hover:bg-white/20 border border-white/20 transition-all shrink-0"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                </button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Dynamic AI View - shown when AI search is active */}
-        {dynamicQuery ? (
-          <DynamicDataView
-            query={dynamicQuery}
-            onBack={() => {
-              setDynamicQuery(null);
-              setSearchQuery("");
-            }}
-          />
-        ) : (
-          <>
-            {/* Filters Panel */}
-            {showFilters && (
-              <Card className="animate-fade-in">
-                <CardHeader className="pb-4">
-                  <h3 className="text-sm font-semibold text-foreground">{t("filters.title")}</h3>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                    {/* Sectors */}
-                    <div>
-                      <Label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t("filters.sectors")}
-                      </Label>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {SECTORS.map((sector) => (
-                          <div key={sector.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`sector-${sector.id}`}
-                              checked={selectedSectors.includes(sector.id)}
-                              onCheckedChange={() => toggleSector(sector.id)}
-                            />
-                            <Label htmlFor={`sector-${sector.id}`} className="text-sm cursor-pointer">
-                              {getSectorName(sector.id)}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Wilayas */}
-                    <div>
-                      <Label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t("filters.wilayas")}
-                      </Label>
-                      <div className="space-y-2 max-h-40 overflow-y-auto">
-                        {WILAYAS.map((wilaya) => (
-                          <div key={wilaya.code} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`wilaya-${wilaya.code}`}
-                              checked={selectedWilayas.includes(wilaya.code)}
-                              onCheckedChange={() => toggleWilaya(wilaya.code)}
-                            />
-                            <Label htmlFor={`wilaya-${wilaya.code}`} className="text-sm cursor-pointer">
-                              {getWilayaName(wilaya.code)}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Metrics */}
-                    <div>
-                      <Label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t("filters.metrics")}
-                      </Label>
-                      <div className="space-y-2">
-                        {METRICS.map((metric) => (
-                          <div key={metric.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={`metric-${metric.id}`}
-                              checked={selectedMetrics.includes(metric.id)}
-                              onCheckedChange={() => toggleMetric(metric.id)}
-                            />
-                            <Label htmlFor={`metric-${metric.id}`} className="text-sm cursor-pointer">
-                              {getMetricName(metric.id)}
-                            </Label>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Year Range */}
-                    <div>
-                      <Label className="mb-2 block text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        {t("filters.yearRange")}
-                      </Label>
-                      <div className="space-y-3">
-                        <div>
-                          <Label htmlFor="year-start" className="text-xs text-muted-foreground">{t("filters.from")}</Label>
-                          <Select value={String(yearRange.start)} onValueChange={(v) => setYearRange((p) => ({ ...p, start: parseInt(v) }))}>
-                            <SelectTrigger id="year-start" className="bg-white">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 20 }, (_, i) => 2005 + i).map((year) => (
-                                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div>
-                          <Label htmlFor="year-end" className="text-xs text-muted-foreground">{t("filters.to")}</Label>
-                          <Select value={String(yearRange.end)} onValueChange={(v) => setYearRange((p) => ({ ...p, end: parseInt(v) }))}>
-                            <SelectTrigger id="year-end" className="bg-white">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {Array.from({ length: 20 }, (_, i) => 2005 + i).map((year) => (
-                                <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      </div>
-                    </div>
+              {/* Expandable filter row */}
+              <div
+                className={`overflow-hidden transition-all duration-300 ease-in-out
+                  ${showFilters ? "max-h-24 opacity-100" : "max-h-0 opacity-0"}`}
+              >
+                <div className="px-4 sm:px-6 pb-3 pt-1 flex flex-wrap items-center gap-2 border-t border-white/10">
+                  {/* Sector picker */}
+                  <div className="relative">
+                    <Building2 className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50 pointer-events-none" />
+                    <select
+                      value={selectedSector}
+                      onChange={(e) => setSelectedSector(e.target.value)}
+                      className="h-9 pl-7 pr-7 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/50 appearance-none cursor-pointer hover:bg-white/15 transition-all"
+                    >
+                      {SECTORS.map(s => <option key={s} value={s} className="bg-primary text-white">{s}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-white/50 pointer-events-none" />
                   </div>
 
-                  <div className="mt-5 flex justify-end gap-2">
-                    <Button variant="outline" size="sm" onClick={clearFilters}>
-                      {t("filters.clear")}
-                    </Button>
-                    <Button size="sm" onClick={fetchData} disabled={isLoading}>
-                      {t("filters.apply")}
-                    </Button>
+                  {/* Wilaya picker */}
+                  <div className="relative">
+                    <MapPin className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50 pointer-events-none" />
+                    <select
+                      value={selectedWilaya}
+                      onChange={(e) => setSelectedWilaya(e.target.value)}
+                      className="h-9 pl-7 pr-7 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/50 appearance-none cursor-pointer hover:bg-white/15 transition-all"
+                    >
+                      {WILAYAS.map(w => <option key={w} value={w} className="bg-primary text-white">{w}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-white/50 pointer-events-none" />
                   </div>
-                </CardContent>
-              </Card>
-            )}
 
-            {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <StatCard
-                icon={<FileText className="h-4 w-4 text-emerald-600" />}
-                label={t("stats.totalRecords")}
-                value={filteredAndSortedData.length.toLocaleString()}
-              />
-              <StatCard
-                icon={<MapPin className="h-4 w-4 text-teal-600" />}
-                label={t("stats.wilayas")}
-                value={String(new Set(filteredAndSortedData.map((d) => d.wilaya)).size)}
-              />
-              <StatCard
-                icon={<Database className="h-4 w-4 text-amber-600" />}
-                label={t("stats.sectors")}
-                value={String(new Set(filteredAndSortedData.map((d) => d.sector)).size)}
-              />
-              <StatCard
-                icon={<Calendar className="h-4 w-4 text-blue-600" />}
-                label={t("stats.years")}
-                value={String(yearRange.end - yearRange.start + 1)}
-              />
-            </div>
-
-            {/* Charts */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader className="pb-2">
-                  <h3 className="text-sm font-semibold text-foreground">{t("charts.sectorDistribution")}</h3>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <BarChart
-                      data={SECTORS.map((s) => ({
-                        name: getSectorName(s.id),
-                        value: filteredAndSortedData.filter((d) => d.sector === s.id).reduce((sum, d) => sum + d.value, 0),
-                      }))}
+                  {/* Year picker */}
+                  <div className="relative">
+                    <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-white/50 pointer-events-none" />
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                      className="h-9 pl-7 pr-7 rounded-lg bg-white/10 border border-white/20 text-white text-xs font-medium focus:outline-none focus:border-white/50 appearance-none cursor-pointer hover:bg-white/15 transition-all"
                     >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                      <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#6b7280" }} axisLine={{ stroke: "#e5e7eb" }} />
-                      <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} axisLine={{ stroke: "#e5e7eb" }} />
-                      <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)" }} />
-                      <Bar dataKey="value" fill="#059669" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
+                      {YEARS.map(y => <option key={y} value={y} className="bg-primary text-white">{y}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 h-3 w-3 text-white/50 pointer-events-none" />
+                  </div>
 
-              <Card>
-                <CardHeader className="pb-2">
-                  <h3 className="text-sm font-semibold text-foreground">{t("charts.yearTrend")}</h3>
-                </CardHeader>
-                <CardContent>
-                  <ResponsiveContainer width="100%" height={260}>
-                    <LineChart
-                      data={Array.from({ length: yearRange.end - yearRange.start + 1 }, (_, i) => ({
-                        year: yearRange.start + i,
-                        value: filteredAndSortedData.filter((d) => d.year === yearRange.start + i).reduce((sum, d) => sum + d.value, 0),
-                      }))}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                      <XAxis dataKey="year" tick={{ fontSize: 11, fill: "#6b7280" }} axisLine={{ stroke: "#e5e7eb" }} />
-                      <YAxis tick={{ fontSize: 11, fill: "#6b7280" }} axisLine={{ stroke: "#e5e7eb" }} />
-                      <Tooltip contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)" }} />
-                      <Line type="monotone" dataKey="value" stroke="#059669" strokeWidth={2.5} dot={{ fill: "#059669", r: 3 }} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Data Table */}
-            <Card>
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">{t("table.title")}</h3>
-                    <CardDescription className="mt-0.5">
-                      {filteredAndSortedData.length} {t("table.records")}
-                    </CardDescription>
+                  {/* Active query badge */}
+                  <div className="ml-auto flex items-center gap-2 text-white/60 text-xs">
+                    <span>Query:</span>
+                    <span className="px-2 py-0.5 bg-white/10 rounded-full text-white/80 max-w-[200px] truncate">
+                      "{activeQuery}"
+                    </span>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
-                {isLoading ? (
-                  <div className="text-center py-12">
-                    <RefreshCw className="h-6 w-6 animate-spin mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">{t("loading")}</p>
-                  </div>
-                ) : error ? (
-                  <div className="text-center py-12">
-                    <p className="text-destructive mb-3 text-sm">{error}</p>
-                    <Button size="sm" onClick={fetchData}>Retry</Button>
-                  </div>
-                ) : (
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead className="w-10">
-                            <Checkbox />
-                          </TableHead>
-                          {[
-                            { id: "wilayaName", label: t("columns.wilaya") },
-                            { id: "sectorName", label: t("columns.sector") },
-                            { id: "metricName", label: t("columns.metric") },
-                            { id: "year", label: t("columns.year") },
-                            { id: "value", label: t("columns.value") },
-                            { id: "unit", label: t("columns.unit") },
-                          ].map((col) => (
-                            <TableHead
-                              key={col.id}
-                              className="cursor-pointer hover:text-foreground transition-colors"
-                              onClick={() => handleSort(col.id)}
-                            >
-                              <div className="flex items-center gap-1">
-                                {col.label}
-                                {sortColumn === col.id && (
-                                  <span className="text-primary">
-                                    {sortDirection === "asc" ? "↑" : "↓"}
-                                  </span>
-                                )}
-                              </div>
-                            </TableHead>
-                          ))}
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {filteredAndSortedData.slice(0, 50).map((row) => (
-                          <TableRow key={row.id}>
-                            <TableCell>
-                              <Checkbox />
-                            </TableCell>
-                            <TableCell className="font-medium">{row.wilayaName}</TableCell>
-                            <TableCell>{row.sectorName}</TableCell>
-                            <TableCell>{row.metricName}</TableCell>
-                            <TableCell>{row.year}</TableCell>
-                            <TableCell className="font-medium tabular-nums">
-                              {row.value.toLocaleString()}
-                            </TableCell>
-                            <TableCell>
-                              <span className="badge-active">{row.unit}</span>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                    {filteredAndSortedData.length > 50 && (
-                      <div className="px-4 py-3 text-xs text-muted-foreground border-t border-gray-100 bg-gray-50/50">
-                        Showing 50 of {filteredAndSortedData.length.toLocaleString()} records
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </>
-        )}
-      </div>
-    </DashboardLayout>
-  );
-}
-
-function StatCard({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <Card>
-      <CardContent className="p-4">
-        <div className="flex items-center gap-2 mb-1.5">
-          {icon}
-          <span className="text-xs text-muted-foreground">{label}</span>
+              </div>
+            </div>
+          )}
         </div>
-        <div className="text-xl font-bold text-foreground">{value}</div>
-      </CardContent>
-    </Card>
+
+        {/* ── CONTENT AREA ───────────────────────────────────── */}
+        <div className="px-4 sm:px-8 py-8 min-h-[500px]">
+
+          {/* State 1: Empty / Instructions */}
+          {!activeQuery && !isGenerating && layoutParams.length === 0 && (
+            <div className="max-w-4xl mx-auto mt-6 animate-in fade-in duration-300">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card className="border-dashed bg-accent/5 hover:bg-accent/10 transition-colors">
+                  <CardContent className="p-6">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                      <Sparkles className="w-5 h-5 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-bold mb-2">How it Works</h3>
+                    <p className="text-muted-foreground text-sm leading-relaxed">
+                      Tell Boussole what you want to know. The AI engine translates your intent
+                      across 21 dynamic visualization modules—from head-to-head comparisons to
+                      dense metric grids—and fetches live data instantly.
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <div className="flex flex-col gap-3 justify-center">
+                  <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider ml-1">
+                    Example Prompts
+                  </h4>
+                  {SUGGESTIONS.map((suggestion, i) => (
+                    <button
+                      key={i}
+                      onClick={() => suggestQuery(suggestion)}
+                      className="text-left px-4 py-3 bg-card border rounded-lg hover:border-primary/50 hover:shadow-sm transition-all text-sm font-medium flex items-center justify-between group"
+                    >
+                      <span className="truncate pr-4">{suggestion}</span>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* State 2: Error */}
+          {error && !isGenerating && (
+            <div className="max-w-2xl mx-auto p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-center border border-red-200 dark:border-red-800 animate-in fade-in duration-300">
+              <p className="font-semibold">{error}</p>
+            </div>
+          )}
+
+          {/* State 3: Loading */}
+          {isGenerating && (
+            <div className="flex flex-col items-center justify-center py-24 gap-6">
+              <div className="relative">
+                <div className="absolute inset-0 bg-primary/20 blur-xl rounded-full" />
+                <Loader2 className="w-12 h-12 text-primary animate-spin relative z-10" />
+              </div>
+              <p className="text-lg font-medium text-muted-foreground text-center">
+                Querying the database and structuring visualizations...
+              </p>
+            </div>
+          )}
+
+          {/* State 4: Results */}
+          {hasResults && (
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
+              <div ref={chartContainerRef} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {layoutParams.map((widgetConf, index) => {
+                  const component = widgetConf.component;
+                  let colSpan = "col-span-1 lg:col-span-12";
+                  if (['kpi_card', 'insight_panel', 'growth_indicator', 'gauge_card', 'comparison_card'].includes(component)) {
+                    colSpan = "col-span-1 lg:col-span-4";
+                  } else if (['pie_chart', 'radar_chart', 'metric_grid', 'sentiment_timeline', 'ranking_card'].includes(component)) {
+                    colSpan = "col-span-1 lg:col-span-6";
+                  } else if (['line_chart', 'bar_chart', 'composed_chart', 'scatter_plot', 'treemap', 'funnel_chart', 'choropleth_map', 'data_table', 'executive_snapshot', 'stacked_area_chart'].includes(component)) {
+                    colSpan = "col-span-1 lg:col-span-8";
+                  }
+                  return (
+                    <div key={`${component}-${index}`} className={colSpan}>
+                      <WidgetRenderer widget={widgetConf} />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </DashboardLayout>
+    </DashboardFilterProvider>
   );
 }

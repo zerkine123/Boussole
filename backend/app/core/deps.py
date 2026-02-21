@@ -5,6 +5,7 @@
 from typing import Generator, AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from redis import asyncio as aioredis
 from redis.asyncio import Redis
 
@@ -78,6 +79,45 @@ async def get_current_user(
         )
     
     return user
+
+
+async def get_current_user_optional(
+    db: AsyncSession = Depends(get_db),
+    credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False))
+):
+    """
+    Dependency that optionally provides the current authenticated user.
+    If no valid token is present, returns None without raising an HTTPException.
+    """
+    if not credentials:
+        return None
+        
+    try:
+        from app.core.security import decode_token
+        from app.services.user_service import UserService
+        
+        token = credentials.credentials
+        payload = decode_token(token)
+        
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+            
+        token_type = payload.get("type")
+        if token_type != "access":
+            return None
+            
+        user_service = UserService(db)
+        user = await user_service.get_by_id(int(user_id))
+        
+        if user and user.is_active:
+            return user
+            
+    except Exception:
+        # Catch JWTError or any validation errors and silently fail (treating as unauthenticated)
+        pass
+        
+    return None
 
 
 async def get_current_active_user(

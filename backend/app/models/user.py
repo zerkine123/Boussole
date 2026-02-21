@@ -2,7 +2,7 @@
 # Boussole - User Model
 # ============================================
 
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, JSON
 from sqlalchemy.orm import relationship
 from datetime import datetime
 from app.db.base import Base
@@ -26,6 +26,7 @@ class User(Base):
     bio = Column(Text, nullable=True)
     avatar_url = Column(String(500), nullable=True)
     preferred_language = Column(String(10), default="en")  # en, fr, ar
+    preferences = Column(JSON, default=dict)
     last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)

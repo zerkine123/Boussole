@@ -13,6 +13,8 @@ class OnboardingPreferencesBase(BaseModel):
     wilayas_of_interest: List[int] = Field(default=[], description="List of Wilaya IDs")
     organization: Optional[str] = Field(None, max_length=255)
     use_case: Optional[str] = Field(None, max_length=50, description="Use case: personal, business, academic, government")
+    sub_sectors: List[str] = Field(default=[], description="List of sub-sectors or specific interests")
+    intent_text: Optional[str] = Field(None, description="Free-text describing the user's ultimate goal or intent")
 
 
 class OnboardingPreferencesCreate(OnboardingPreferencesBase):
@@ -27,6 +29,8 @@ class OnboardingPreferencesUpdate(BaseModel):
     wilayas_of_interest: Optional[List[int]] = None
     organization: Optional[str] = Field(None, max_length=255)
     use_case: Optional[str] = Field(None, max_length=50)
+    sub_sectors: Optional[List[str]] = None
+    intent_text: Optional[str] = None
 
 
 class OnboardingPreferences(OnboardingPreferencesBase):

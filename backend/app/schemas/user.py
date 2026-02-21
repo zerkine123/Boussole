@@ -3,7 +3,7 @@
 # ============================================
 
 from pydantic import BaseModel, EmailStr, Field, ConfigDict
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
@@ -61,6 +61,14 @@ class User(UserBase):
     last_login: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+    
+    model_config = ConfigDict(from_attributes=True)
+
+class UserAdminResponse(User):
+    """Schema for user response in Admin Panel, including relationships."""
+    # We use 'Any' here temporarily to avoid circular imports, 
+    # but the router will serialize it correctly due to from_attributes=True
+    subscriptions: Optional[List[dict]] = []
     
     model_config = ConfigDict(from_attributes=True)
 

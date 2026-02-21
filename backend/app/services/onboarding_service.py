@@ -59,6 +59,7 @@ class OnboardingService:
             "organization": user.organization,
             "preferred_language": user.preferred_language,
             "onboarding_completed": True,  # Placeholder - add dedicated field to model
+            **(user.preferences or {})
         }
     
     async def update_user_preferences(
@@ -189,10 +190,11 @@ class OnboardingService:
         update_data = {
             "preferred_language": preferences.preferred_language,
             "organization": preferences.organization,
+            "preferences": preferences.model_dump(exclude={"skip_onboarding"}, exclude_unset=True)
         }
         
         # In production, add onboarding_completed flag and store sectors_of_interest
-        # For now, we'll just update basic fields
+        # For now, we'll update basic fields and the new JSON preferences
         
         await self.db.execute(
             update(User)

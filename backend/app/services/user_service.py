@@ -48,3 +48,22 @@ class UserService:
         await self.db.refresh(user)
         
         return user
+    
+    async def get_multi(self, skip: int = 0, limit: int = 100) -> list[User]:
+        """
+        Get all users with pagination.
+        """
+        result = await self.db.execute(select(User).offset(skip).limit(limit))
+        return result.scalars().all()
+        
+    async def delete(self, user_id: int) -> Optional[User]:
+        """
+        Delete a user.
+        """
+        user = await self.get_by_id(user_id)
+        if not user:
+            return None
+            
+        await self.db.delete(user)
+        await self.db.commit()
+        return user

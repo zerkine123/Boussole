@@ -7,6 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.db.session import get_db
+from app.core.deps import get_current_superuser
+from app.models.user import User
 from app.schemas.sector import SectorCreate, SectorUpdate, Sector
 from app.services.sector_service import SectorService
 
@@ -74,7 +76,8 @@ async def get_sector_indicators(
 @router.post("/", response_model=Sector, status_code=status.HTTP_201_CREATED)
 async def create_sector(
     sector: SectorCreate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_superuser)
 ):
     """
     Create a new sector.
@@ -97,7 +100,8 @@ async def create_sector(
 async def update_sector(
     slug: str,
     sector: SectorUpdate,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_superuser)
 ):
     """
     Update an existing sector.
@@ -115,7 +119,8 @@ async def update_sector(
 @router.delete("/{slug}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_sector(
     slug: str,
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_superuser)
 ):
     """
     Delete a sector.

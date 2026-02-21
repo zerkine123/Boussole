@@ -1,7 +1,9 @@
-from groq import Groq
-from typing import List
+from typing import List, Optional
 from app.schemas.chat import ChatMessage
-from app.core.config import settings
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.llm_adapter import get_llm_adapter, BaseLLMAdapter
+from app.models.intent import SystemPrompt
+from sqlalchemy import select
 
 SYSTEM_PROMPT = """You are Boussole AI, the intelligent assistant for the Boussole platform — an Algerian Data Analytics SaaS.
 
@@ -30,38 +32,45 @@ Guidelines:
 
 
 class ChatService:
-    def __init__(self):
-        api_key = settings.GROQ_API_KEY
-        if not api_key:
-            raise ValueError("GROQ_API_KEY not found in environment variables")
-        
-        self.client = Groq(api_key=api_key)
-        self.model = "llama-3.3-70b-versatile"
+    def __init__(self, db: Optional[AsyncSession] = None):
+        self.db = db
+        self.adapter: Optional[BaseLLMAdapter] = None
 
     async def get_completion(self, message: str, history: List[ChatMessage] = None) -> str:
         try:
-            # Build messages array
-            messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-            
-            if history:
-                for msg in history:
-                    messages.append({
-                        "role": msg.role,
-                        "content": msg.content
-                    })
-            
-            # Add the current message
-            messages.append({"role": "user", "content": message})
+            if not self.adapter:
+                self.adapter = await get_llm_adapter(self.db)
 
-            # Call Groq API
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=messages,
+            # Build user prompt with history
+            user_prompt = ""
+            if history:
+                user_prompt += "Previous conversation context:\n"
+                for msg in history:
+                    user_prompt += f"{msg.role.capitalize()}: {msg.content}\n"
+                user_prompt += "\n"
+            user_prompt += f"User: {message}"
+
+            # Get active System Prompt from DB if available
+            active_prompt = SYSTEM_PROMPT
+            if self.db:
+                stmt = select(SystemPrompt).where(
+                    SystemPrompt.name == "ai_assistant",
+                    SystemPrompt.is_active == True
+                )
+                prompt_match = await self.db.execute(stmt)
+                db_prompt = prompt_match.scalar_one_or_none()
+                if db_prompt:
+                    active_prompt = db_prompt.content
+
+            # Call provider-agnostic API
+            response = await self.adapter.complete(
+                system_prompt=active_prompt,
+                user_prompt=user_prompt,
                 temperature=0.7,
                 max_tokens=2048,
             )
             
-            return response.choices[0].message.content
+            return response
         except Exception as e:
             print(f"Error in ChatService: {e}")
             return f"I apologize, but I encountered an error processing your request. Please try again. (Error: {str(e)})"

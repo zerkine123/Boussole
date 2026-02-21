@@ -41,30 +41,44 @@ export default function OnboardingPage() {
     },
     {
       id: 3,
+      title: t('steps.subSectors.title'),
+      description: t('steps.subSectors.description'),
+      icon: <Layers className="h-5 w-5" />,
+    },
+    {
+      id: 4,
       title: t('steps.wilayas.title'),
       description: t('steps.wilayas.description'),
       icon: <Map className="h-5 w-5" />,
     },
     {
-      id: 4,
+      id: 5,
       title: t('steps.language.title'),
       description: t('steps.language.description'),
       icon: <Globe className="h-5 w-5" />,
     },
     {
-      id: 5,
+      id: 6,
       title: t('steps.organization.title'),
       description: t('steps.organization.description'),
       icon: <Briefcase className="h-5 w-5" />,
+    },
+    {
+      id: 7,
+      title: t('steps.intent.title'),
+      description: t('steps.intent.description'),
+      icon: <CheckCircle2 className="h-5 w-5" />,
     }
   ];
 
   const [currentStep, setCurrentStep] = useState(1);
   const [useCase, setUseCase] = useState<string>('');
   const [selectedSectors, setSelectedSectors] = useState<number[]>([]);
+  const [subSectorsText, setSubSectorsText] = useState('');
   const [selectedWilayas, setSelectedWilayas] = useState<number[]>([]);
   const [preferredLanguage, setPreferredLanguage] = useState('en');
   const [organization, setOrganization] = useState('');
+  const [intentText, setIntentText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
   const [error, setError] = useState('');
@@ -130,7 +144,7 @@ export default function OnboardingPage() {
 
   const handleNext = async () => {
     // If not last step, iterate to next step
-    if (currentStep < 5) {
+    if (currentStep < 7) {
       setCurrentStep(prev => prev + 1);
       return;
     }
@@ -150,6 +164,8 @@ export default function OnboardingPage() {
         wilayas_of_interest: selectedWilayas,
         preferred_language: preferredLanguage,
         organization: organization,
+        sub_sectors: subSectorsText.split(',').map(s => s.trim()).filter(Boolean),
+        intent_text: intentText,
       });
 
       setIsCompleted(true);
@@ -200,7 +216,7 @@ export default function OnboardingPage() {
     );
   };
 
-  const progressPercentage = (currentStep / 5) * 100;
+  const progressPercentage = (currentStep / 7) * 100;
 
   return (
     <DashboardLayout>
@@ -212,7 +228,7 @@ export default function OnboardingPage() {
             <p className="text-muted-foreground mb-6">{t('subtitle')}</p>
             <div className="space-y-2">
               <div className="flex justify-between text-sm text-muted-foreground">
-                <span>{t('buttons.step', { current: currentStep, total: 5, defaultMessage: `Step ${currentStep} of 5` })}</span>
+                <span>{t('buttons.step', { current: currentStep, total: 7, defaultMessage: `Step ${currentStep} of 7` })}</span>
                 <span>{Math.round(progressPercentage)}%</span>
               </div>
               <Progress value={progressPercentage} className="h-2" />
@@ -278,8 +294,32 @@ export default function OnboardingPage() {
               </Card>
             )}
 
-            {/* Step 3: Wilayas */}
+            {/* Step 3: Sub-sectors */}
             {currentStep === 3 && (
+              <Card className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <CardHeader>
+                  <h2 className="text-xl font-semibold">{t('steps.subSectors.title')}</h2>
+                  <p className="text-muted-foreground">{t('steps.subSectors.description')}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="subsectors" className="text-base">{t('steps.subSectors.title')}</Label>
+                    <Input
+                      id="subsectors"
+                      type="text"
+                      placeholder={t('steps.subSectors.placeholder', { defaultMessage: 'e.g. Renewable energy, E-commerce, Wheat farming' })}
+                      value={subSectorsText}
+                      onChange={(e) => setSubSectorsText(e.target.value)}
+                      className="w-full h-11"
+                    />
+                    <p className="text-xs text-muted-foreground mt-2 font-medium">Use commas to separate multiple sub-sectors.</p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Step 4: Wilayas */}
+            {currentStep === 4 && (
               <Card className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <CardHeader>
                   <h2 className="text-xl font-semibold">{t('steps.wilayas.title')}</h2>
@@ -315,8 +355,8 @@ export default function OnboardingPage() {
               </Card>
             )}
 
-            {/* Step 4: Language */}
-            {currentStep === 4 && (
+            {/* Step 5: Language */}
+            {currentStep === 5 && (
               <Card className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <CardHeader>
                   <h2 className="text-xl font-semibold">{t('steps.language.title')}</h2>
@@ -337,8 +377,8 @@ export default function OnboardingPage() {
               </Card>
             )}
 
-            {/* Step 5: Organization */}
-            {currentStep === 5 && (
+            {/* Step 6: Organization */}
+            {currentStep === 6 && (
               <Card className="animate-in fade-in slide-in-from-right-4 duration-300">
                 <CardHeader>
                   <h2 className="text-xl font-semibold">{t('steps.organization.title')}</h2>
@@ -354,6 +394,28 @@ export default function OnboardingPage() {
                       value={organization}
                       onChange={(e) => setOrganization(e.target.value)}
                       className="w-full h-11"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Step 7: Intent */}
+            {currentStep === 7 && (
+              <Card className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <CardHeader>
+                  <h2 className="text-xl font-semibold">{t('steps.intent.title')}</h2>
+                  <p className="text-muted-foreground">{t('steps.intent.description')}</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <Label htmlFor="intent" className="text-base">{t('steps.intent.title')}</Label>
+                    <textarea
+                      id="intent"
+                      placeholder={t('steps.intent.placeholder', { defaultMessage: 'Tell us exactly what your goal is...' })}
+                      value={intentText}
+                      onChange={(e) => setIntentText(e.target.value)}
+                      className="w-full min-h-[120px] rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </div>
                 </CardContent>
@@ -382,7 +444,7 @@ export default function OnboardingPage() {
               <Button onClick={handleNext} disabled={isLoading} className="min-w-[120px]">
                 {isLoading ? (
                   <Loader2 className="animate-spin h-4 w-4" />
-                ) : currentStep === 5 ? (
+                ) : currentStep === 7 ? (
                   t('buttons.submit')
                 ) : (
                   <>

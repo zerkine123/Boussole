@@ -56,7 +56,22 @@ class Settings(BaseSettings):
     # ============================================
     # CORS Settings
     # ============================================
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:3001"]
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000", 
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001"
+    ]
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:
+        if isinstance(v, str) and not v.startswith("["):
+            return [i.strip() for i in v.split(",")]
+        elif isinstance(v, str) and v.startswith("["):
+            import json
+            return json.loads(v)
+        return v
     
     # ============================================
     # AI / LLM Settings
@@ -64,9 +79,17 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     OPENAI_API_KEY: Optional[str] = None
     GOOGLE_API_KEY: Optional[str] = None
+    ANTHROPIC_API_KEY: Optional[str] = None
     LLM_PROVIDER: str = "groq"
     GROQ_MODEL: str = "mixtral-8x7b-32768"
     OPENAI_MODEL: str = "gpt-4-turbo-preview"
+    
+    # ============================================
+    # Google Maps / Geo Intelligence Settings
+    # ============================================
+    GOOGLE_MAPS_API_KEY: Optional[str] = None  # Falls back to GOOGLE_API_KEY
+    GEO_CACHE_TTL: int = 3600  # Cache TTL in seconds (1 hour)
+    GEO_CACHE_PREFIX: str = "geo:"
     
     # ============================================
     # RAG Settings

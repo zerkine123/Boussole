@@ -139,20 +139,20 @@ export default function TopBar() {
                                 <DropdownMenuContent align="end" className="w-56">
                                     <DropdownMenuLabel>{t("profile")}</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
-                                    <Link href="/profile">
+                                    <Link href={`/${locale}/profile`}>
                                         <DropdownMenuItem className="cursor-pointer">
                                             <User className="mr-2 h-4 w-4" />
                                             <span>{t("profile")}</span>
                                         </DropdownMenuItem>
                                     </Link>
-                                    <Link href="/settings">
+                                    <Link href={`/${locale}/settings`}>
                                         <DropdownMenuItem className="cursor-pointer">
                                             <Settings className="mr-2 h-4 w-4" />
                                             <span>{t("settings")}</span>
                                         </DropdownMenuItem>
                                     </Link>
                                     <DropdownMenuSeparator />
-                                    <Link href="/login">
+                                    <Link href={`/${locale}/login`}>
                                         <DropdownMenuItem className="cursor-pointer text-red-600 focus:text-red-600">
                                             <LogOut className="mr-2 h-4 w-4" />
                                             <span>{t("logout")}</span>
@@ -219,15 +219,15 @@ export default function TopBar() {
                             </div>
                         </div>
 
-                        <Link href="/profile" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all">
+                        <Link href={`/${locale}/profile`} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all">
                             <User className="h-5 w-5" />
                             <span>{t("profile")}</span>
                         </Link>
-                        <Link href="/settings" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all">
+                        <Link href={`/${locale}/settings`} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/80 hover:text-white hover:bg-white/10 transition-all">
                             <Settings className="h-5 w-5" />
                             <span>{t("settings")}</span>
                         </Link>
-                        <Link href="/login" className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:text-red-300 hover:bg-white/10 transition-all">
+                        <Link href={`/${locale}/login`} className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:text-red-300 hover:bg-white/10 transition-all">
                             <LogOut className="h-5 w-5" />
                             <span>{t("logout")}</span>
                         </Link>

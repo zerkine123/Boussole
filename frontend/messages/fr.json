@@ -62,20 +62,30 @@
         "selectAll": "Tout sélectionner",
         "clearAll": "Tout effacer"
       },
+      "subSectors": {
+        "title": "3. Des sous-secteurs spécifiques ?",
+        "description": "Ex : Énergies renouvelables, E-commerce, Culture du blé",
+        "placeholder": "Entrez des sous-secteurs ou intérêts..."
+      },
       "wilayas": {
-        "title": "3. Quelles Wilayas vous intéressent ?",
+        "title": "4. Quelles Wilayas vous intéressent ?",
         "description": "Sélectionnez les provinces que vous souhaitez analyser",
         "selectAll": "Tout sélectionner",
         "clearAll": "Tout effacer"
       },
       "language": {
-        "title": "4. Langue préférée",
+        "title": "5. Langue préférée",
         "description": "Choisissez votre langue préférée"
       },
       "organization": {
-        "title": "5. Organisation (Optionnel)",
+        "title": "6. Organisation (Optionnel)",
         "description": "Parlez-nous de votre organisation",
         "placeholder": "Entrez le nom de l'organisation"
+      },
+      "intent": {
+        "title": "7. Quels sont vos objectifs ?",
+        "description": "Dites-nous exactement ce que vous souhaitez accomplir pour personnaliser votre tableau de bord.",
+        "placeholder": "Ex : Je veux trouver la meilleure région pour l'énergie solaire."
       }
     },
     "sectors": {
@@ -340,6 +350,20 @@
       "title": "Construction",
       "description": "Bâtiment et développement des infrastructures"
     }
+  },
+  "insights": {
+    "title": "Analyses IA",
+    "description": "Découvrez des analyses automatisées des dernières tendances de données par l'IA.",
+    "generate": "Générer de nouvelles analyses",
+    "generating": "Génération en cours...",
+    "types": {
+      "trend": "Tendance",
+      "anomaly": "Anomalie",
+      "summary": "Résumé",
+      "correlation": "Corrélation"
+    },
+    "noInsights": "Aucune analyse disponible pour ce secteur.",
+    "importance": "Importance"
   },
   "auth": {
     "login": {

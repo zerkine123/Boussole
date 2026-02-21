@@ -25,7 +25,7 @@ class Metric(Base):
     sector_id = Column(Integer, ForeignKey("sectors.id", ondelete="CASCADE"), nullable=False, index=True)
     
     # Metric identification
-    slug = Column(String(100), unique=True, index=True, nullable=False)
+    slug = Column(String(100), index=True, nullable=False)
     code = Column(String(50))  # Official metric code
     name_en = Column(String(200), nullable=False)
     name_fr = Column(String(200), nullable=False)

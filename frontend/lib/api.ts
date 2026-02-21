@@ -1,7 +1,7 @@
 // API client for Boussole backend
 // Hardcoded for debugging (CORRECTED URL)
-const API_BASE_URL = "https://boussole-production.up.railway.app";
-// const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+// const API_BASE_URL = "https://boussole-production.up.railway.app";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 console.log("DEBUG: API_BASE_URL is:", API_BASE_URL);
 
 export interface ApiResponse<T> {
@@ -34,11 +34,14 @@ class ApiError extends Error {
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}));
-    throw new ApiError(
-      errorData.message || "An error occurred",
-      response.status,
-      errorData.details,
-    );
+    // FastAPI returns detail as a string for HTTPException, or an array for 422 validation errors
+    const rawDetail = errorData.detail ?? errorData.message;
+    const message = Array.isArray(rawDetail)
+      ? rawDetail.map((e: any) => `${e.loc?.join(".")}: ${e.msg}`).join("; ")
+      : typeof rawDetail === "string"
+        ? rawDetail
+        : `Request failed (${response.status})`;
+    throw new ApiError(message, response.status, errorData.details);
   }
   return response.json();
 }
@@ -126,6 +129,40 @@ export const api = {
         headers: { Authorization: `Bearer ${token}` },
       },
     );
+    return handleResponse(response);
+  },
+
+  async createSector(token: string, data: any) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/sectors`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async updateSector(token: string, slug: string, data: any) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/sectors/${slug}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  async deleteSector(token: string, slug: string) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/sectors/${slug}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return handleResponse(response);
   },
 
@@ -341,6 +378,13 @@ export const api = {
   },
 
   // Search endpoints
+  async getDashboardLayout(token: string) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/dashboard/layout`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return handleResponse<{ layout: string[], metrics?: any }>(response);
+  },
+
   async analyzeSearch(token: string | null, query: string) {
     const response = await fetch(`${API_BASE_URL}/api/v1/search/analyze`, {
       method: "POST",
@@ -362,6 +406,68 @@ export const api = {
         body: JSON.stringify({ query }),
       },
     );
+    return handleResponse<any>(response);
+  },
+
+  async generateDashboardLayout(token: string | null, query: string) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/dashboard/layout/generate`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` })
+      },
+      body: JSON.stringify({ query }),
+    });
+    return handleResponse<{ layout: any[] }>(response);
+  },
+
+  // Financial endpoints
+  async simulateFinancials(data: any) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/finance/simulate`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return handleResponse<any>(response);
+  },
+
+  // Insights endpoints
+  async getInsights(
+    token: string,
+    params?: { sector_id?: number; limit?: number }
+  ) {
+    const queryParams = new URLSearchParams(params as any);
+    const response = await fetch(`${API_BASE_URL}/api/v1/insights/?${queryParams}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  async generateInsights(
+    token: string,
+    params: { sector_slug: string; period_start?: string; period_end?: string }
+  ) {
+    const queryParams = new URLSearchParams(params as any);
+    const response = await fetch(`${API_BASE_URL}/api/v1/insights/generate?${queryParams}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return handleResponse(response);
+  },
+
+  // Widgets / Data Query endpoint
+  async queryData(
+    token: string | null,
+    payload: { metric_slugs: string[]; group_by?: string; filters?: any }
+  ) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/data/query`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(payload),
+    });
     return handleResponse<any>(response);
   },
 };

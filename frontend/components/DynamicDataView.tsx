@@ -8,11 +8,19 @@ import {
     Bar,
     LineChart,
     Line,
+    PieChart,
+    Pie,
+    RadarChart,
+    Radar,
+    PolarGrid,
+    PolarAngleAxis,
+    PolarRadiusAxis,
     XAxis,
     YAxis,
     Tooltip,
     ResponsiveContainer,
     CartesianGrid,
+    Legend,
     Cell,
 } from "recharts";
 import {
@@ -23,9 +31,24 @@ import {
     ArrowLeft,
     Sparkles,
     Download,
+    MapPin,
+    Gauge,
+    Trophy,
+    Table2,
 } from "lucide-react";
 import { generateReportPdf } from "@/lib/generateReportPdf";
 import { api } from "@/lib/api";
+import dynamic from "next/dynamic";
+
+const CompetitorMapWidget = dynamic(
+    () => import("./widgets/CompetitorMapWidget"),
+    { ssr: false, loading: () => <p className="h-[400px] flex items-center justify-center text-muted-foreground">Loading Map...</p> }
+);
+
+const FinancialSimulatorWidget = dynamic(
+    () => import("./widgets/FinancialSimulatorWidget").then(mod => mod.FinancialSimulatorWidget),
+    { ssr: false, loading: () => <p className="h-[400px] flex items-center justify-center text-muted-foreground">Loading Simulator...</p> }
+);
 
 // Color palette for charts
 const CHART_COLORS = [
@@ -39,9 +62,258 @@ const CHART_COLORS = [
     "#6366f1",
 ];
 
+const PIE_COLORS = ["#059669", "#0ea5e9", "#8b5cf6", "#f59e0b", "#ef4444", "#ec4899", "#14b8a6", "#6366f1"];
+
 // ========================
 // Widget Components
 // ========================
+
+// ---------- Table Widget ----------
+function DataTableWidget({
+    title,
+    data,
+    config,
+}: {
+    title: string;
+    data: Array<Record<string, any>>;
+    config?: Record<string, any>;
+}) {
+    if (!data || data.length === 0) return null;
+    const columns = Object.keys(data[0]);
+    return (
+        <Card className="overflow-hidden">
+            <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                    <Table2 className="h-4 w-4 text-primary" />
+                    <h3 className="font-semibold text-sm">{title}</h3>
+                </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                        <thead>
+                            <tr className="border-b bg-muted/50">
+                                {columns.map((col) => (
+                                    <th key={col} className="px-4 py-2.5 text-left font-medium text-muted-foreground capitalize">
+                                        {col.replace(/_/g, " ")}
+                                    </th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {data.slice(0, config?.rows_per_page || 10).map((row, i) => (
+                                <tr key={i} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                                    {columns.map((col) => (
+                                        <td key={col} className="px-4 py-2.5">
+                                            {typeof row[col] === "number"
+                                                ? row[col].toLocaleString()
+                                                : String(row[col] ?? "-")}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
+// ---------- Pie Chart Widget ----------
+function PieChartWidget({
+    title,
+    data,
+}: {
+    title: string;
+    data: Array<{ name: string; value: number }>;
+}) {
+    if (!data || data.length === 0) return null;
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                <h3 className="font-semibold text-sm">{title}</h3>
+            </CardHeader>
+            <CardContent>
+                <ResponsiveContainer width="100%" height={280}>
+                    <PieChart>
+                        <Pie
+                            data={data}
+                            dataKey="value"
+                            nameKey="name"
+                            cx="50%"
+                            cy="50%"
+                            outerRadius={100}
+                            label={({ name, percent }) =>
+                                `${name} ${(percent * 100).toFixed(0)}%`
+                            }
+                            labelLine={false}
+                        >
+                            {data.map((_, i) => (
+                                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                            formatter={(v: number) => v.toLocaleString()}
+                            contentStyle={{
+                                borderRadius: "8px",
+                                border: "1px solid #e5e7eb",
+                                boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+                            }}
+                        />
+                        <Legend />
+                    </PieChart>
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
+    );
+}
+
+// ---------- Radar Chart Widget ----------
+function RadarChartWidget({
+    title,
+    data,
+}: {
+    title: string;
+    data: Array<{ subject: string; value: number; fullMark?: number }>;
+}) {
+    if (!data || data.length === 0) return null;
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                <h3 className="font-semibold text-sm">{title}</h3>
+            </CardHeader>
+            <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                    <RadarChart data={data}>
+                        <PolarGrid strokeDasharray="3 3" />
+                        <PolarAngleAxis dataKey="subject" tick={{ fontSize: 12 }} />
+                        <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fontSize: 10 }} />
+                        <Radar
+                            name="Score"
+                            dataKey="value"
+                            stroke="#059669"
+                            fill="#059669"
+                            fillOpacity={0.3}
+                        />
+                        <Tooltip />
+                    </RadarChart>
+                </ResponsiveContainer>
+            </CardContent>
+        </Card>
+    );
+}
+
+// ---------- Gauge / Score Widget ----------
+function GaugeScoreWidget({
+    title,
+    data,
+}: {
+    title: string;
+    data: {
+        score: number;
+        label?: string;
+        breakdown?: Array<{ name: string; value: number }>;
+    };
+}) {
+    if (!data) return null;
+    const score = data.score ?? 0;
+    const color =
+        score >= 75 ? "#22c55e" : score >= 50 ? "#f59e0b" : score >= 25 ? "#f97316" : "#ef4444";
+    const circumference = 2 * Math.PI * 60;
+    const offset = circumference - (score / 100) * circumference;
+
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                    <Gauge className="h-4 w-4 text-primary" />
+                    <h3 className="font-semibold text-sm">{title}</h3>
+                </div>
+            </CardHeader>
+            <CardContent className="flex flex-col items-center">
+                <div className="relative w-36 h-36">
+                    <svg className="w-full h-full -rotate-90" viewBox="0 0 140 140">
+                        <circle cx="70" cy="70" r="60" stroke="#e5e7eb" strokeWidth="10" fill="none" />
+                        <circle
+                            cx="70" cy="70" r="60"
+                            stroke={color} strokeWidth="10" fill="none"
+                            strokeDasharray={circumference}
+                            strokeDashoffset={offset}
+                            strokeLinecap="round"
+                            className="transition-all duration-1000 ease-out"
+                        />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-3xl font-bold" style={{ color }}>{score}</span>
+                        <span className="text-xs text-muted-foreground">/100</span>
+                    </div>
+                </div>
+                {data.label && (
+                    <span className="mt-2 text-sm font-medium px-3 py-1 rounded-full" style={{ backgroundColor: color + "20", color }}>
+                        {data.label}
+                    </span>
+                )}
+                {data.breakdown && data.breakdown.length > 0 && (
+                    <div className="w-full mt-4 space-y-2">
+                        {data.breakdown.map((item, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs">
+                                <span className="text-muted-foreground">{item.name}</span>
+                                <div className="flex items-center gap-2">
+                                    <div className="w-24 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full rounded-full transition-all duration-700"
+                                            style={{ width: `${item.value}%`, backgroundColor: CHART_COLORS[i % CHART_COLORS.length] }}
+                                        />
+                                    </div>
+                                    <span className="font-medium w-8 text-right">{item.value}</span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+// ---------- Map Placeholder Widget ----------
+function MapPlaceholderWidget({
+    title,
+    data,
+}: {
+    title: string;
+    data?: { lat?: number; lon?: number; label?: string; score?: number };
+}) {
+    return (
+        <Card>
+            <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-primary" />
+                    <h3 className="font-semibold text-sm">{title}</h3>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <div className="aspect-video bg-gradient-to-br from-emerald-50 to-sky-50 rounded-xl flex flex-col items-center justify-center gap-3 border border-dashed border-emerald-200">
+                    <MapPin className="h-10 w-10 text-emerald-400" />
+                    {data?.label && (
+                        <span className="text-sm font-medium text-emerald-700">{data.label}</span>
+                    )}
+                    {data?.score !== undefined && (
+                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            Activity Score: {data.score}/100
+                        </span>
+                    )}
+                    {data?.lat && data?.lon && (
+                        <span className="text-xs text-muted-foreground">
+                            {data.lat.toFixed(3)}°N, {data.lon.toFixed(3)}°E
+                        </span>
+                    )}
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 function HeroWidget({
     title,
@@ -386,18 +658,68 @@ export default function DynamicDataView({ query, onBack }: DynamicDataViewProps)
                         data={widget.data || []}
                     />
                 );
+            case "table":
+                return (
+                    <DataTableWidget
+                        key={index}
+                        title={widget.title || "Data"}
+                        data={widget.data || []}
+                        config={widget.config}
+                    />
+                );
+            case "pie_chart":
+                return (
+                    <PieChartWidget
+                        key={index}
+                        title={widget.title || "Distribution"}
+                        data={widget.data || []}
+                    />
+                );
+            case "radar":
+                return (
+                    <RadarChartWidget
+                        key={index}
+                        title={widget.title || "Analysis"}
+                        data={widget.data || []}
+                    />
+                );
+            case "gauge":
+                return (
+                    <GaugeScoreWidget
+                        key={index}
+                        title={widget.title || "Score"}
+                        data={widget.data || { score: 0 }}
+                    />
+                );
+            case "map":
+                return (
+                    <MapPlaceholderWidget
+                        key={index}
+                        title={widget.title || "Location"}
+                        data={widget.data}
+                    />
+                );
+            case "competitor_map":
+                return (
+                    <CompetitorMapWidget
+                        key={index}
+                        title={widget.title || "Competitor Map"}
+                        data={widget.data}
+                    />
+                );
+            case "financial_simulator":
+                return (
+                    <FinancialSimulatorWidget key={index} />
+                );
             default:
                 return null;
         }
     };
 
     // Group charts side by side
-    const chartWidgets = layout.widgets.filter(
-        (w) => w.type === "bar_chart" || w.type === "line_chart"
-    );
-    const otherWidgets = layout.widgets.filter(
-        (w) => w.type !== "bar_chart" && w.type !== "line_chart"
-    );
+    const chartTypes = ["bar_chart", "line_chart", "pie_chart", "radar"];
+    const chartWidgets = layout.widgets.filter((w) => chartTypes.includes(w.type));
+    const otherWidgets = layout.widgets.filter((w) => !chartTypes.includes(w.type));
 
     return (
         <div className="space-y-6">

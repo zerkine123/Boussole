@@ -33,6 +33,8 @@ def init_db():
     from app.models.user import User
     from app.models.sector import Sector
     from app.models.indicator import Indicator
+    from app.models.intent import IntentLog, StaticIntent, SystemPrompt
+    from app.models.ai_config import AIProviderConfig
     
     # Import all models to ensure they are registered with SQLAlchemy
     # This is important for Alembic to detect all models

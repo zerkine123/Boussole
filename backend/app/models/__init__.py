@@ -15,6 +15,10 @@ from app.models.metric import Metric
 from app.models.time_series_data import TimeSeriesData
 from app.models.forecast import Forecast
 from app.models.subscription import Subscription, SubscriptionHistory
+from app.models.widget import WidgetDefinition
+from app.models.insight import Insight
+from app.models.intent import IntentLog, StaticIntent, SystemPrompt
+from app.models.ai_config import AIProviderConfig
 
 __all__ = [
     "Base",
@@ -30,4 +34,10 @@ __all__ = [
     "Forecast",
     "Subscription",
     "SubscriptionHistory",
+    "WidgetDefinition",
+    "Insight",
+    "IntentLog",
+    "StaticIntent",
+    "SystemPrompt",
+    "AIProviderConfig",
 ]

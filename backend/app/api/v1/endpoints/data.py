@@ -153,3 +153,128 @@ async def delete_data_point(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Data point not found"
         )
+
+
+from pydantic import BaseModel
+from typing import Literal, Dict, Any
+
+class DataQueryRequest(BaseModel):
+    metric_slugs: List[str]
+    group_by: Optional[str] = None
+    filters: Optional[Dict[str, Any]] = None
+
+@router.post("/query")
+async def execute_data_query(
+    request: DataQueryRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Universal data query endpoint for Dashboard widgets.
+    Uses aggregated SQL queries for performance on large datasets.
+    """
+    from sqlalchemy import select, func, and_
+    from app.models.metric import Metric
+    from app.models.sector import Sector
+    from app.models.wilaya import Wilaya
+
+    # Normalize group_by
+    VALID_GROUP_BY = {"year", "month", "sector", "wilaya"}
+    group_by = request.group_by if request.group_by in VALID_GROUP_BY else None
+
+    filters = request.filters or {}
+
+    # ── Build aggregated query ─────────────────────────────────
+    # Select: SUM(value), sector fields, wilaya fields, year, slug, unit, trend, change_percent
+    query = (
+        select(
+            Metric.slug,
+            Metric.unit,
+            Metric.year,
+            Metric.trend,
+            Metric.change_percent,
+            func.sum(Metric.value).label("value"),
+            func.avg(Metric.change_percent).label("avg_change"),
+            Sector.name_en.label("sector_name"),
+            Sector.slug.label("sector_slug"),
+            Wilaya.name_en.label("wilaya_name"),
+            Wilaya.code.label("wilaya_code"),
+        )
+        .join(Sector, Metric.sector_id == Sector.id)
+        .join(Wilaya, Metric.wilaya_id == Wilaya.id)
+        .where(Metric.slug.in_(request.metric_slugs))
+    )
+
+    # ── Apply filters using WHERE (not extra joins) ────────────
+    conditions = []
+
+    if filters.get("sector_slug"):
+        conditions.append(Sector.slug == str(filters["sector_slug"]))
+
+    if filters.get("wilaya_code"):
+        # Wilaya codes are like "16", "31" etc - ensure string comparison
+        conditions.append(Wilaya.code == str(filters["wilaya_code"]).zfill(2))
+
+    if filters.get("start_year"):
+        try:
+            conditions.append(Metric.year >= int(filters["start_year"]))
+        except (ValueError, TypeError):
+            pass
+
+    if filters.get("end_year"):
+        try:
+            conditions.append(Metric.year <= int(filters["end_year"]))
+        except (ValueError, TypeError):
+            pass
+
+    # Only include latest year by default if no year filter - prevents overwhelming results
+    if not filters.get("start_year") and not filters.get("end_year") and not group_by == "year":
+        conditions.append(Metric.year == 2024)
+
+    if conditions:
+        query = query.where(and_(*conditions))
+
+    # ── GROUP BY dimension ─────────────────────────────────────
+    if group_by == "year":
+        query = query.group_by(
+            Metric.slug, Metric.unit, Metric.year, Metric.trend, Metric.change_percent,
+            Sector.name_en, Sector.slug, Wilaya.name_en, Wilaya.code
+        ).order_by(Metric.year)
+    elif group_by == "sector":
+        query = query.group_by(
+            Metric.slug, Metric.unit, Sector.name_en, Sector.slug, Wilaya.name_en, Wilaya.code,
+            Metric.year, Metric.trend, Metric.change_percent
+        ).order_by(Sector.name_en)
+    elif group_by == "wilaya":
+        query = query.group_by(
+            Metric.slug, Metric.unit, Wilaya.name_en, Wilaya.code, Sector.name_en, Sector.slug,
+            Metric.year, Metric.trend, Metric.change_percent
+        ).order_by(Wilaya.name_en)
+    else:
+        # No specific grouping - just aggregate all matching rows per slug
+        query = query.group_by(
+            Metric.slug, Metric.unit, Sector.name_en, Sector.slug, Wilaya.name_en, Wilaya.code,
+            Metric.year, Metric.trend, Metric.change_percent
+        )
+
+    # Limit results to prevent huge payloads
+    query = query.limit(500)
+
+    result = await db.execute(query)
+    rows = result.mappings().all()
+
+    data = []
+    for row in rows:
+        data.append({
+            "metric_slug": row["slug"],
+            "value": float(row["value"] or 0),
+            "unit": row["unit"],
+            "year": row["year"],
+            "trend": row["trend"],
+            "change_percent": float(row["avg_change"] or 0),
+            "sector_name": row["sector_name"] or "Unknown",
+            "sector_slug": row["sector_slug"] or "unknown",
+            "wilaya_name": row["wilaya_name"] or "Unknown",
+            "wilaya_code": row["wilaya_code"] or "Unknown",
+        })
+
+    return {"data": data}

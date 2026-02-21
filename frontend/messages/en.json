@@ -62,20 +62,30 @@
         "selectAll": "Select All",
         "clearAll": "Clear All"
       },
+      "subSectors": {
+        "title": "3. Any specific sub-sectors?",
+        "description": "E.g. Renewable energy, E-commerce, Wheat farming",
+        "placeholder": "Enter specific sub-sectors or interests..."
+      },
       "wilayas": {
-        "title": "3. Which Wilayas interest you?",
+        "title": "4. Which Wilayas interest you?",
         "description": "Select the provinces you want to analyze",
         "selectAll": "Select All",
         "clearAll": "Clear All"
       },
       "language": {
-        "title": "4. Preferred Language",
+        "title": "5. Preferred Language",
         "description": "Choose your preferred language"
       },
       "organization": {
-        "title": "5. Organization (Optional)",
+        "title": "6. Organization (Optional)",
         "description": "Tell us about your organization",
         "placeholder": "Enter organization name"
+      },
+      "intent": {
+        "title": "7. What are your specific goals?",
+        "description": "Tell us exactly what you want to achieve so our AI can customize your dashboard.",
+        "placeholder": "E.g. I want to find the best region to start a new solar energy completely."
       }
     },
     "sectors": {
@@ -339,6 +349,20 @@
       "title": "Construction",
       "description": "Building and infrastructure development"
     }
+  },
+  "insights": {
+    "title": "AI Insights",
+    "description": "Discover automated AI-driven analysis of the latest data trends.",
+    "generate": "Generate New Insights",
+    "generating": "Generating Insights...",
+    "types": {
+      "trend": "Trend",
+      "anomaly": "Anomaly",
+      "summary": "Summary",
+      "correlation": "Correlation"
+    },
+    "noInsights": "No insights available for this sector.",
+    "importance": "Importance"
   },
   "auth": {
     "login": {

@@ -20,12 +20,20 @@ import {
   Instagram,
   ChevronRight
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   const t = useTranslations();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const token = localStorage.getItem("access_token");
+      if (token) setIsLoggedIn(true);
+    }
+  }, []);
 
   const toggleMenu = () => setMobileMenuOpen(!mobileMenuOpen);
 
@@ -56,14 +64,24 @@ export default function HomePage() {
 
             {/* Auth Buttons */}
             <div className="hidden md:flex items-center gap-4">
-              <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
-                {t("nav.login")}
-              </Link>
-              <Link href="/register">
-                <Button className="rounded-full px-6 shadow-lg shadow-primary/20">
-                  {t("nav.register")}
-                </Button>
-              </Link>
+              {isLoggedIn ? (
+                <Link href="/dashboard">
+                  <Button className="rounded-full px-6 shadow-lg shadow-primary/20">
+                    {t("nav.dashboard")}
+                  </Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+                    {t("nav.login")}
+                  </Link>
+                  <Link href="/register">
+                    <Button className="rounded-full px-6 shadow-lg shadow-primary/20">
+                      {t("nav.register")}
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Toggle */}
@@ -82,12 +100,20 @@ export default function HomePage() {
             <MobileNavLink href="#contact" onClick={toggleMenu}>{t("contact.title")}</MobileNavLink>
             <hr className="border-border" />
             <div className="flex flex-col gap-3">
-              <Link href="/login" className="w-full">
-                <Button variant="ghost" className="w-full justify-start">{t("nav.login")}</Button>
-              </Link>
-              <Link href="/register" className="w-full">
-                <Button className="w-full">{t("nav.register")}</Button>
-              </Link>
+              {isLoggedIn ? (
+                <Link href="/dashboard" className="w-full">
+                  <Button className="w-full">{t("nav.dashboard")}</Button>
+                </Link>
+              ) : (
+                <>
+                  <Link href="/login" className="w-full">
+                    <Button variant="ghost" className="w-full justify-start">{t("nav.login")}</Button>
+                  </Link>
+                  <Link href="/register" className="w-full">
+                    <Button className="w-full">{t("nav.register")}</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

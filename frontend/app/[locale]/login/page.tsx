@@ -36,6 +36,18 @@ export default function LoginPage() {
             localStorage.setItem("access_token", data.access_token);
             localStorage.setItem("refresh_token", data.refresh_token);
 
+            try {
+                const userProfileRes = await api.getMe(data.access_token);
+                const userProfile = userProfileRes as any;
+
+                if (userProfile.is_superuser) {
+                    router.push("/admin");
+                    return;
+                }
+            } catch (profileErr) {
+                console.error("Error fetching profile on login", profileErr);
+            }
+
             router.push("/dashboard");
         } catch (err) {
             console.error(err);
