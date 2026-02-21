@@ -16,6 +16,8 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { API_BASE_URL as baseUrl } from "@/lib/api";
 
 interface AIProviderConfig {
     id: number;
@@ -53,7 +55,6 @@ export function AdminAIProviders() {
         setTestResult(null);
         try {
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
             const payload = isEdit && editingProvider ? {
                 provider_name: editingProvider.provider_name,
@@ -105,7 +106,6 @@ export function AdminAIProviders() {
         try {
             setLoading(true);
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/providers`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -127,7 +127,6 @@ export function AdminAIProviders() {
     const handleCreate = async () => {
         try {
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
             const payload = {
                 provider_name: providerName,
@@ -165,7 +164,6 @@ export function AdminAIProviders() {
         if (!editingProvider) return;
         try {
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
             const payload = {
                 model_name: editingProvider.model_name,
@@ -198,7 +196,6 @@ export function AdminAIProviders() {
         if (!confirm("Are you sure you want to delete this provider configuration?")) return;
         try {
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/providers/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }
@@ -214,7 +211,6 @@ export function AdminAIProviders() {
     const handleActivate = async (id: number) => {
         try {
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/providers/${id}`, {
                 method: "PUT",

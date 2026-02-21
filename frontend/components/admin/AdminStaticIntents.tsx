@@ -25,7 +25,10 @@ interface StaticIntent {
     created_at: string;
 }
 
-export function AdminStaticIntents() {
+import { useTranslations } from "next-intl";
+import { API_BASE_URL as baseUrl } from "@/lib/api";
+
+export default function AdminStaticIntents() {
     const [intents, setIntents] = useState<StaticIntent[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -36,7 +39,6 @@ export function AdminStaticIntents() {
         try {
             setLoading(true);
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/static`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -59,7 +61,6 @@ export function AdminStaticIntents() {
         try {
             const token = localStorage.getItem("access_token");
             const mapped_intent = JSON.parse(newJson);
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/static`, {
                 method: "POST",
                 headers: {
@@ -90,7 +91,6 @@ export function AdminStaticIntents() {
         if (!confirm("Delete this static intent mapping?")) return;
         try {
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/static/${id}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` }

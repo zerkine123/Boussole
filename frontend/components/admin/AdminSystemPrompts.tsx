@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { History } from "lucide-react";
+import { API_BASE_URL as baseUrl } from "@/lib/api";
 
 interface SystemPrompt {
     id: number;
@@ -19,7 +20,7 @@ interface SystemPrompt {
     updated_at: string;
 }
 
-export function AdminSystemPrompts() {
+export default function AdminSystemPrompts() {
     const [prompts, setPrompts] = useState<SystemPrompt[]>([]);
     const [loading, setLoading] = useState(true);
     const [editingPrompt, setEditingPrompt] = useState<SystemPrompt | null>(null);
@@ -29,7 +30,6 @@ export function AdminSystemPrompts() {
         try {
             setLoading(true);
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/prompts`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
@@ -58,7 +58,6 @@ export function AdminSystemPrompts() {
 
         try {
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/prompts`, {
                 method: "POST", // We create a new version
                 headers: {
@@ -154,7 +153,6 @@ export function AdminSystemPrompts() {
                     {!prompts.find(p => p.name === 'intent_parser') && (
                         <Button variant="secondary" onClick={async () => {
                             const token = localStorage.getItem("access_token");
-                            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
                             await fetch(`${baseUrl}/api/v1/admin/ai/prompts`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -173,7 +171,6 @@ export function AdminSystemPrompts() {
                     {!prompts.find(p => p.name === 'ai_assistant') && (
                         <Button variant="secondary" onClick={async () => {
                             const token = localStorage.getItem("access_token");
-                            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
                             await fetch(`${baseUrl}/api/v1/admin/ai/prompts`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

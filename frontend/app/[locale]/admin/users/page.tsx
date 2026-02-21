@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { API_BASE_URL } from "@/lib/api";
 import { Shield, ShieldAlert, Users, MoreHorizontal, Check, X, Search, UserMinus, UserCheck } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -42,15 +43,18 @@ interface User {
     }[];
 }
 
-export default function AdminUsersPage() {
+export default function UsersAdminPage() {
     const tCommon = useTranslations("common");
     const [users, setUsers] = useState<User[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(0);
+    const [total, setTotal] = useState(0);
+    const limit = 10;
     const [searchQuery, setSearchQuery] = useState("");
-    const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
     const fetchUsers = async () => {
-        setIsLoading(true);
+        setLoading(true);
         try {
             const token = localStorage.getItem("access_token");
             const response = await fetch(`${API_BASE_URL}/api/v1/admin/users`, {
@@ -68,7 +72,7 @@ export default function AdminUsersPage() {
         } catch (error) {
             console.error("Error fetching users:", error);
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
     };
 
@@ -171,7 +175,7 @@ export default function AdminUsersPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {isLoading ? (
+                                {loading ? (
                                     <TableRow>
                                         <TableCell colSpan={5} className="text-center py-8">
                                             Loading users...

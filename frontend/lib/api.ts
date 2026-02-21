@@ -1,6 +1,6 @@
 // API client for Boussole backend
 // Hardcoded for debugging (CORRECTED URL)
-const API_BASE_URL = "https://boussole-production.up.railway.app";
+export const API_BASE_URL = "https://boussole-production.up.railway.app";
 console.log("DEBUG: API_BASE_URL is hardcoded to:", API_BASE_URL);
 
 export interface ApiResponse<T> {

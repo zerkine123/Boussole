@@ -6,6 +6,8 @@ import {
     Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { API_BASE_URL as baseUrl } from "@/lib/api";
 import {
     Dialog,
     DialogContent,
@@ -36,7 +38,6 @@ export function AdminAILogs() {
         try {
             setLoading(true);
             const token = localStorage.getItem("access_token");
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
             const res = await fetch(`${baseUrl}/api/v1/admin/ai/audits`, {
                 headers: {
                     Authorization: `Bearer ${token}`

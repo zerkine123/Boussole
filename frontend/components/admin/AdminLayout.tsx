@@ -5,6 +5,8 @@ import { useRouter, usePathname } from "next/navigation";
 import AdminTopBar from "@/components/admin/AdminTopBar";
 import { useLocale } from "next-intl";
 
+import { API_BASE_URL } from "@/lib/api";
+
 interface AdminLayoutProps {
     children: React.ReactNode;
 }
@@ -24,7 +26,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             }
 
             try {
-                const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
                 const response = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
                     headers: {
                         Authorization: `Bearer ${token}`
