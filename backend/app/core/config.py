@@ -3,7 +3,7 @@
 # ============================================
 
 from pydantic_settings import BaseSettings
-from typing import List, Optional, Any
+from typing import List, Optional, Any, Union
 from functools import lru_cache
 from pydantic import field_validator
 
