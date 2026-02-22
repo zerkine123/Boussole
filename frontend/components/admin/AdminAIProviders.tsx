@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { DatabaseZap } from "lucide-react";
 import {
     Dialog,
     DialogContent,
@@ -117,6 +118,32 @@ export default function AdminAIProviders() {
             console.error("Failed to fetch AI providers:", error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const [isSeeding, setIsSeeding] = useState(false);
+    const [seedMessage, setSeedMessage] = useState<string | null>(null);
+
+    const handleSeed = async () => {
+        if (!confirm("This will clear all current metrics and re-seed the database with ~85k representative data rows. Proceed?")) return;
+        setIsSeeding(true);
+        setSeedMessage(null);
+        try {
+            const token = localStorage.getItem("access_token");
+            const res = await fetch(`${baseUrl}/api/v1/admin/seed-metrics`, {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setSeedMessage(data.message || "Seeding complete!");
+            } else {
+                setSeedMessage(`Error: ${data.detail || "Seeding failed"}`);
+            }
+        } catch (error: any) {
+            setSeedMessage(`Error: ${error.message}`);
+        } finally {
+            setIsSeeding(false);
         }
     };
 
@@ -230,76 +257,157 @@ export default function AdminAIProviders() {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-semibold">LLM Providers</h2>
-                <div className="space-x-2">
-                    <Button variant="outline" size="sm" onClick={fetchProviders} disabled={loading}>
-                        Refresh
-                    </Button>
-                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                        <DialogTrigger asChild>
-                            <Button size="sm">Add Provider Config</Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Add New Provider Configuration</DialogTitle>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                                <div className="space-y-2">
-                                    <Label>Provider</Label>
-                                    <select
-                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                                        value={providerName}
-                                        onChange={(e) => setProviderName(e.target.value)}
-                                    >
-                                        <option value="groq">Groq</option>
-                                        <option value="openai">OpenAI</option>
-                                        <option value="azure">Azure / Microsoft Foundry</option>
-                                        <option value="gemini">Google Gemini</option>
-                                        <option value="anthropic">Anthropic Claude</option>
-                                    </select>
+        <div className="space-y-6">
+            <Card className="border-emerald-200 bg-emerald-50/30">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                        <DatabaseZap className="h-5 w-5 text-emerald-600" />
+                        Database Infrastructure
+                    </CardTitle>
+                    <CardDescription>
+                        Populate your platform with representative market data. This is required for the Dashboard and Data Explorer to function correctly.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center gap-4">
+                        <Button
+                            onClick={handleSeed}
+                            disabled={isSeeding}
+                            className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                        >
+                            {isSeeding ? "Seeding Database..." : "Seed Database (85k rows)"}
+                        </Button>
+                        {seedMessage && (
+                            <p className={`text-sm font-medium ${seedMessage.includes("Error") ? "text-red-600" : "text-emerald-700"}`}>
+                                {seedMessage}
+                            </p>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+
+            <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <h2 className="text-xl font-semibold">LLM Providers</h2>
+                    <div className="space-x-2">
+                        <Button variant="outline" size="sm" onClick={fetchProviders} disabled={loading}>
+                            Refresh
+                        </Button>
+                        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                            <DialogTrigger asChild>
+                                <Button size="sm">Add Provider Config</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Add New Provider Configuration</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label>Provider</Label>
+                                        <select
+                                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                                            value={providerName}
+                                            onChange={(e) => setProviderName(e.target.value)}
+                                        >
+                                            <option value="groq">Groq</option>
+                                            <option value="openai">OpenAI</option>
+                                            <option value="azure">Azure / Microsoft Foundry</option>
+                                            <option value="gemini">Google Gemini</option>
+                                            <option value="anthropic">Anthropic Claude</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>API Key</Label>
+                                        <Input
+                                            type="password"
+                                            placeholder="sk-..."
+                                            value={apiKey}
+                                            onChange={e => setApiKey(e.target.value)}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Model Name</Label>
+                                        <Input
+                                            placeholder="mixtral-8x7b-32768, gpt-4o, etc."
+                                            value={modelName}
+                                            onChange={e => setModelName(e.target.value)}
+                                        />
+                                        <p className="text-xs text-muted-foreground">For Azure, use your Deployment Name here.</p>
+                                    </div>
+                                    {providerName === "azure" && (
+                                        <div className="space-y-2">
+                                            <Label>Azure Endpoint Base URL</Label>
+                                            <Input
+                                                placeholder="https://YOUR_RESOURCE_NAME.openai.azure.com/"
+                                                value={apiBaseUrl}
+                                                onChange={e => setApiBaseUrl(e.target.value)}
+                                            />
+                                        </div>
+                                    )}
+                                    <div className="flex items-center space-x-2 pt-2">
+                                        <input
+                                            type="checkbox"
+                                            id="active-check"
+                                            checked={isActive}
+                                            onChange={e => setIsActive(e.target.checked)}
+                                            className="h-4 w-4 rounded border-gray-300"
+                                        />
+                                        <Label htmlFor="active-check">Set as Active Global Provider</Label>
+                                    </div>
+
+                                    {testResult && !isEditOpen && (
+                                        <div className={`p-3 rounded-md text-sm ${testResult.success ? "bg-green-50 text-green-900 border border-green-200" : "bg-red-50 text-red-900 border border-red-200"}`}>
+                                            <p className="font-semibold">{testResult.message}</p>
+                                            {testResult.response && <p className="mt-1 text-xs opacity-80">AI Response: "{testResult.response}"</p>}
+                                        </div>
+                                    )}
+
+                                    <div className="flex gap-2">
+                                        <Button variant="secondary" className="w-1/3" onClick={() => handleTestConnection(false)} disabled={isTesting || !apiKey || !modelName}>
+                                            {isTesting ? "Testing..." : "Test"}
+                                        </Button>
+                                        <Button className="w-2/3" onClick={handleCreate}>Save Configuration</Button>
+                                    </div>
                                 </div>
+                            </DialogContent>
+                        </Dialog>
+                    </div>
+                </div>
+
+                {/* Edit Dialog */}
+                <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Edit Provider: {editingProvider?.provider_name}</DialogTitle>
+                        </DialogHeader>
+                        {editingProvider && (
+                            <div className="space-y-4 py-4">
                                 <div className="space-y-2">
                                     <Label>API Key</Label>
                                     <Input
                                         type="password"
-                                        placeholder="sk-..."
-                                        value={apiKey}
-                                        onChange={e => setApiKey(e.target.value)}
+                                        value={editingProvider.api_key}
+                                        onChange={e => setEditingProvider({ ...editingProvider, api_key: e.target.value })}
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Model Name</Label>
                                     <Input
-                                        placeholder="mixtral-8x7b-32768, gpt-4o, etc."
-                                        value={modelName}
-                                        onChange={e => setModelName(e.target.value)}
+                                        value={editingProvider.model_name}
+                                        onChange={e => setEditingProvider({ ...editingProvider, model_name: e.target.value })}
                                     />
-                                    <p className="text-xs text-muted-foreground">For Azure, use your Deployment Name here.</p>
                                 </div>
-                                {providerName === "azure" && (
+                                {editingProvider.provider_name === "azure" && (
                                     <div className="space-y-2">
                                         <Label>Azure Endpoint Base URL</Label>
                                         <Input
-                                            placeholder="https://YOUR_RESOURCE_NAME.openai.azure.com/"
-                                            value={apiBaseUrl}
-                                            onChange={e => setApiBaseUrl(e.target.value)}
+                                            value={editingProvider.api_base_url || ""}
+                                            onChange={e => setEditingProvider({ ...editingProvider, api_base_url: e.target.value })}
                                         />
                                     </div>
                                 )}
-                                <div className="flex items-center space-x-2 pt-2">
-                                    <input
-                                        type="checkbox"
-                                        id="active-check"
-                                        checked={isActive}
-                                        onChange={e => setIsActive(e.target.checked)}
-                                        className="h-4 w-4 rounded border-gray-300"
-                                    />
-                                    <Label htmlFor="active-check">Set as Active Global Provider</Label>
-                                </div>
 
-                                {testResult && !isEditOpen && (
+                                {testResult && isEditOpen && (
                                     <div className={`p-3 rounded-md text-sm ${testResult.success ? "bg-green-50 text-green-900 border border-green-200" : "bg-red-50 text-red-900 border border-red-200"}`}>
                                         <p className="font-semibold">{testResult.message}</p>
                                         {testResult.response && <p className="mt-1 text-xs opacity-80">AI Response: "{testResult.response}"</p>}
@@ -307,126 +415,75 @@ export default function AdminAIProviders() {
                                 )}
 
                                 <div className="flex gap-2">
-                                    <Button variant="secondary" className="w-1/3" onClick={() => handleTestConnection(false)} disabled={isTesting || !apiKey || !modelName}>
+                                    <Button variant="secondary" className="w-1/3" onClick={() => handleTestConnection(true)} disabled={isTesting || !editingProvider.api_key || !editingProvider.model_name}>
                                         {isTesting ? "Testing..." : "Test"}
                                     </Button>
-                                    <Button className="w-2/3" onClick={handleCreate}>Save Configuration</Button>
+                                    <Button className="w-2/3" onClick={handleUpdate}>Update Configuration</Button>
                                 </div>
                             </div>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
 
-            {/* Edit Dialog */}
-            <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Edit Provider: {editingProvider?.provider_name}</DialogTitle>
-                    </DialogHeader>
-                    {editingProvider && (
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label>API Key</Label>
-                                <Input
-                                    type="password"
-                                    value={editingProvider.api_key}
-                                    onChange={e => setEditingProvider({ ...editingProvider, api_key: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Model Name</Label>
-                                <Input
-                                    value={editingProvider.model_name}
-                                    onChange={e => setEditingProvider({ ...editingProvider, model_name: e.target.value })}
-                                />
-                            </div>
-                            {editingProvider.provider_name === "azure" && (
-                                <div className="space-y-2">
-                                    <Label>Azure Endpoint Base URL</Label>
-                                    <Input
-                                        value={editingProvider.api_base_url || ""}
-                                        onChange={e => setEditingProvider({ ...editingProvider, api_base_url: e.target.value })}
-                                    />
-                                </div>
-                            )}
-
-                            {testResult && isEditOpen && (
-                                <div className={`p-3 rounded-md text-sm ${testResult.success ? "bg-green-50 text-green-900 border border-green-200" : "bg-red-50 text-red-900 border border-red-200"}`}>
-                                    <p className="font-semibold">{testResult.message}</p>
-                                    {testResult.response && <p className="mt-1 text-xs opacity-80">AI Response: "{testResult.response}"</p>}
-                                </div>
-                            )}
-
-                            <div className="flex gap-2">
-                                <Button variant="secondary" className="w-1/3" onClick={() => handleTestConnection(true)} disabled={isTesting || !editingProvider.api_key || !editingProvider.model_name}>
-                                    {isTesting ? "Testing..." : "Test"}
-                                </Button>
-                                <Button className="w-2/3" onClick={handleUpdate}>Update Configuration</Button>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            <div className="border rounded-md bg-white">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Provider</TableHead>
-                            <TableHead>Model</TableHead>
-                            <TableHead>API Key</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {providers.length === 0 ? (
+                <div className="border rounded-md bg-white">
+                    <Table>
+                        <TableHeader>
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                                    {loading ? "Loading..." : "No provider configurations found in database. Using .env defaults."}
-                                </TableCell>
+                                <TableHead>Provider</TableHead>
+                                <TableHead>Model</TableHead>
+                                <TableHead>API Key</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                        ) : (
-                            providers.map((provider) => (
-                                <TableRow key={provider.id}>
-                                    <TableCell className="font-medium capitalize">
-                                        {provider.provider_name}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary">{provider.model_name}</Badge>
-                                    </TableCell>
-                                    <TableCell className="text-muted-foreground text-sm font-mono tracking-wider">
-                                        {provider.api_key ? `••••••••${provider.api_key.slice(-4)}` : 'None'}
-                                    </TableCell>
-                                    <TableCell>
-                                        {provider.is_active ? (
-                                            <Badge className="bg-green-600">Active</Badge>
-                                        ) : (
-                                            <Badge variant="secondary">Inactive</Badge>
-                                        )}
-                                    </TableCell>
-                                    <TableCell className="text-right space-x-2">
-                                        {!provider.is_active && (
-                                            <Button variant="outline" size="sm" onClick={() => handleActivate(provider.id)}>
-                                                Activate
-                                            </Button>
-                                        )}
-                                        <Button variant="ghost" size="sm" onClick={() => {
-                                            setEditingProvider(provider);
-                                            setIsEditOpen(true);
-                                        }}>
-                                            Edit
-                                        </Button>
-                                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(provider.id)}>
-                                            Delete
-                                        </Button>
+                        </TableHeader>
+                        <TableBody>
+                            {providers.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                                        {loading ? "Loading..." : "No provider configurations found in database. Using .env defaults."}
                                     </TableCell>
                                 </TableRow>
-                            ))
-                        )}
-                    </TableBody>
-                </Table>
+                            ) : (
+                                providers.map((provider) => (
+                                    <TableRow key={provider.id}>
+                                        <TableCell className="font-medium capitalize">
+                                            {provider.provider_name}
+                                        </TableCell>
+                                        <TableCell>
+                                            <Badge variant="secondary">{provider.model_name}</Badge>
+                                        </TableCell>
+                                        <TableCell className="text-muted-foreground text-sm font-mono tracking-wider">
+                                            {provider.api_key ? `••••••••${provider.api_key.slice(-4)}` : 'None'}
+                                        </TableCell>
+                                        <TableCell>
+                                            {provider.is_active ? (
+                                                <Badge className="bg-green-600">Active</Badge>
+                                            ) : (
+                                                <Badge variant="secondary">Inactive</Badge>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right space-x-2">
+                                            {!provider.is_active && (
+                                                <Button variant="outline" size="sm" onClick={() => handleActivate(provider.id)}>
+                                                    Activate
+                                                </Button>
+                                            )}
+                                            <Button variant="ghost" size="sm" onClick={() => {
+                                                setEditingProvider(provider);
+                                                setIsEditOpen(true);
+                                            }}>
+                                                Edit
+                                            </Button>
+                                            <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive" onClick={() => handleDelete(provider.id)}>
+                                                Delete
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
+                        </TableBody>
+                    </Table>
+                </div>
             </div>
         </div>
     );

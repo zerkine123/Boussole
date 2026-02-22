@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_superuser, get_db
 from app.models.user import User
 from app.schemas.user import User as UserSchema, UserUpdate, UserAdminResponse
+from app.services.seeder import seed_metrics
 from sqlalchemy.orm import selectinload
 from sqlalchemy import select
 
@@ -95,3 +96,20 @@ async def delete_user(
         
     user = await user_service.delete(user_id=user_id)
     return user
+
+@router.post("/seed-metrics")
+async def trigger_seed_metrics(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_superuser),
+) -> Any:
+    """
+    Trigger the comprehensive metric seeder. Admin only.
+    """
+    try:
+        count = await seed_metrics(db)
+        return {"ok": True, "message": f"Successfully seeded {count:,} metric rows."}
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Seeding failed: {str(e)}"
+        )

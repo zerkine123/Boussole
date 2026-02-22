@@ -469,6 +469,17 @@ export const api = {
     });
     return handleResponse<any>(response);
   },
+
+  async triggerSeedMetrics(token: string) {
+    const response = await fetch(`${API_BASE_URL}/api/v1/admin/seed-metrics`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return handleResponse<any>(response);
+  },
 };
 
 export default api;
