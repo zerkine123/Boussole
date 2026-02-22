@@ -78,11 +78,17 @@ class FilterPanelWidget(BaseModel):
     allowed_filters: List[Literal["sector", "wilaya", "year"]] = Field(..., description="Which filters to expose to the user")
 
 # 10. Executive Snapshot
+class MetricValue(BaseModel):
+    label: str
+    value: str
+    trend: Literal["up", "down", "none"] = "none"
+
 class ExecutiveSnapshotWidget(BaseModel):
     component: Literal["executive_snapshot"] = "executive_snapshot"
     title: str = Field(..., description="Title of the snapshot")
-    metrics: List[str] = Field(..., description="Up to 4 metric slugs to display in miniature")
-    summary: str = Field(..., description="A 1-2 sentence AI summary of the snapshot")
+    key_metrics: List[MetricValue] = Field(..., description="Up to 4 metrics with labels and values")
+    summary_text: str = Field(..., description="A 1-2 sentence AI summary of the data")
+    variant: Literal["blue", "green"] = Field("blue", description="Theme color")
     filters: Optional[WidgetFilters] = None
 
 # 11. Pie Chart

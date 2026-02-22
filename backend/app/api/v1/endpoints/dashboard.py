@@ -237,7 +237,8 @@ async def get_dashboard_layout(
                {"label": "State Funding", "value": "2.4B DZD", "trend": "up"},
                {"label": "Risk Score", "value": "Low", "trend": "down"},
                {"label": "Market Saturation", "value": "12%", "trend": "none"}
-            ]
+            ],
+            "variant": "blue"
         },
         {
             "component": "kpi_card",
@@ -422,6 +423,7 @@ async def generate_ondemand_layout(
             "You are an intelligent data explorer orchestrator for Boussole, an Algerian Business Intelligence platform.\n"
             "Your job is to translate a user's free-text data query into the optimal analytical dashboard layout.\n\n"
             "AVAILABLE COMPONENTS TO CHOOSE FROM:\n"
+            "- executive_snapshot: High-level AI summary header with top 4 metrics. (NEW: Highly recommended as the first widget for any inquiry).\n"
             "- kpi_card: Single metric volume.\n"
             "- line_chart: Trend over time.\n"
             "- bar_chart: Comparison across categories (e.g. sectors or wilayas).\n"
@@ -451,8 +453,9 @@ async def generate_ondemand_layout(
             "RULES:\n"
             "1. You MUST return ONLY a valid JSON object matching the JSON schema provided below.\n"
             "2. Select 3 to 6 widgets that perfectly answer the user's inquiry.\n"
-            "3. DO NOT invent metric slugs. ONLY use the ones listed above.\n"
-            "4. If the user mentions a specific sector or wilaya, strictly pass it inside the widget filters!\n\n"
+            "3. For `executive_snapshot`, ALWAYS set `variant: \"green\"` for this explorer interface. Provide a `summary_text` (AI summary of the data) and `key_metrics` (array of objects with label, value, trend).\n"
+            "4. DO NOT invent metric slugs. ONLY use the ones listed above.\n"
+            "5. If the user mentions a specific sector or wilaya, strictly pass it inside the widget filters!\n\n"
             f"REQUIRED JSON SCHEMA:\n{schema_json}\n"
         )
         

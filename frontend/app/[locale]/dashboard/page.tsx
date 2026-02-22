@@ -293,7 +293,8 @@ export default function DashboardPage() {
                 { label: "Market Growth", value: "4.2%", trend: "up" },
                 { label: "New Startups", value: "1,240", trend: "down" },
                 { label: "Investor Index", value: "84/100", trend: "up" }
-              ]
+              ],
+              variant: "blue"
             }} />
           </div>
 

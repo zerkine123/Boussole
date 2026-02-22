@@ -388,22 +388,24 @@ export default function DataExplorerPage() {
           {hasResults && (
             <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
               <div ref={chartContainerRef} className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {layoutParams.map((widgetConf, index) => {
-                  const component = widgetConf.component;
-                  let colSpan = "col-span-1 lg:col-span-12";
-                  if (['kpi_card', 'growth_indicator', 'gauge_card'].includes(component)) {
-                    colSpan = "col-span-1 md:col-span-6 lg:col-span-3";
-                  } else if (['pie_chart', 'radar_chart', 'comparison_card', 'insight_panel'].includes(component)) {
-                    colSpan = "col-span-1 lg:col-span-6";
-                  } else if (['line_chart', 'bar_chart', 'composed_chart', 'scatter_plot', 'treemap', 'funnel_chart', 'choropleth_map', 'data_table', 'executive_snapshot', 'stacked_area_chart', 'metric_grid', 'sentiment_timeline'].includes(component)) {
-                    colSpan = "col-span-1 lg:col-span-12";
-                  }
-                  return (
-                    <div key={`${component}-${index}`} className={colSpan}>
-                      <WidgetRenderer widget={widgetConf} />
-                    </div>
-                  );
-                })}
+                {[...layoutParams]
+                  .sort((a, b) => (a.component === 'executive_snapshot' ? -1 : (b.component === 'executive_snapshot' ? 1 : 0)))
+                  .map((widgetConf, index) => {
+                    const component = widgetConf.component;
+                    let colSpan = "col-span-1 lg:col-span-12";
+                    if (['kpi_card', 'growth_indicator', 'gauge_card'].includes(component)) {
+                      colSpan = "col-span-1 md:col-span-6 lg:col-span-3";
+                    } else if (['pie_chart', 'radar_chart', 'comparison_card', 'insight_panel'].includes(component)) {
+                      colSpan = "col-span-1 lg:col-span-6";
+                    } else if (['line_chart', 'bar_chart', 'composed_chart', 'scatter_plot', 'treemap', 'funnel_chart', 'choropleth_map', 'data_table', 'executive_snapshot', 'stacked_area_chart', 'metric_grid', 'sentiment_timeline'].includes(component)) {
+                      colSpan = "col-span-1 lg:col-span-12";
+                    }
+                    return (
+                      <div key={`${component}-${index}`} className={colSpan}>
+                        <WidgetRenderer widget={widgetConf} />
+                      </div>
+                    );
+                  })}
               </div>
             </div>
           )}
