@@ -126,8 +126,8 @@ export default function DataExplorerPage() {
             2. Active → compact toolbar strip
         ─────────────────────────────────────────────────────────────── */}
         <div
-          className={`bg-primary/95 relative overflow-hidden transition-all duration-500 ease-in-out
-            ${hasResults || isGenerating ? "shadow-lg" : "shadow-sm"}`}
+          className={`relative overflow-hidden transition-all duration-500 ease-in-out
+            ${hasResults || isGenerating ? "shadow-lg bg-emerald-900" : "shadow-sm bg-emerald-600"}`}
         >
           {/* Decorative blobs – fade out in compact mode */}
           <div
@@ -135,8 +135,10 @@ export default function DataExplorerPage() {
               ${hasResults || isGenerating ? "opacity-0" : "opacity-100"}`}
           >
             <div className="absolute top-[20%] left-[10%] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute top-[40%] right-[15%] w-36 h-36 bg-accent/20 rounded-full blur-3xl" />
+            <div className="absolute top-[40%] right-[15%] w-36 h-36 bg-white/10 rounded-full blur-3xl" />
           </div>
+
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-teal-600/10 pointer-events-none" />
 
           {/* ── IDLE STATE (full hero) ─────────────────────────── */}
           {!hasResults && !isGenerating && (
@@ -389,12 +391,12 @@ export default function DataExplorerPage() {
                 {layoutParams.map((widgetConf, index) => {
                   const component = widgetConf.component;
                   let colSpan = "col-span-1 lg:col-span-12";
-                  if (['kpi_card', 'insight_panel', 'growth_indicator', 'gauge_card', 'comparison_card'].includes(component)) {
-                    colSpan = "col-span-1 lg:col-span-4";
-                  } else if (['pie_chart', 'radar_chart', 'metric_grid', 'sentiment_timeline', 'ranking_card'].includes(component)) {
+                  if (['kpi_card', 'growth_indicator', 'gauge_card'].includes(component)) {
+                    colSpan = "col-span-1 md:col-span-6 lg:col-span-3";
+                  } else if (['pie_chart', 'radar_chart', 'comparison_card', 'insight_panel'].includes(component)) {
                     colSpan = "col-span-1 lg:col-span-6";
-                  } else if (['line_chart', 'bar_chart', 'composed_chart', 'scatter_plot', 'treemap', 'funnel_chart', 'choropleth_map', 'data_table', 'executive_snapshot', 'stacked_area_chart'].includes(component)) {
-                    colSpan = "col-span-1 lg:col-span-8";
+                  } else if (['line_chart', 'bar_chart', 'composed_chart', 'scatter_plot', 'treemap', 'funnel_chart', 'choropleth_map', 'data_table', 'executive_snapshot', 'stacked_area_chart', 'metric_grid', 'sentiment_timeline'].includes(component)) {
+                    colSpan = "col-span-1 lg:col-span-12";
                   }
                   return (
                     <div key={`${component}-${index}`} className={colSpan}>

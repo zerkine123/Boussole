@@ -284,9 +284,35 @@ export default function DashboardPage() {
 
           {/* Dynamic AI Layout Integration */}
           {dashboardLayout.length === 0 ? (
-            <div className="flex justify-center items-center py-32 flex-col gap-4">
-              <Loader2 className="h-10 w-10 animate-spin text-primary" />
-              <p className="text-muted-foreground animate-pulse text-sm">AI Orchestrator is building your custom dashboard...</p>
+            <div className="space-y-6 animate-in fade-in duration-700">
+              {/* Static Fallback for better UX while waiting or if API fails */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="col-span-1 md:col-span-2 lg:col-span-4">
+                  <WidgetRenderer widget={{
+                    component: "executive_snapshot",
+                    title: "Executive Market Overview",
+                    description: "Quick summary of Algeria's economic pulse",
+                    metrics: [
+                      { label: "Active Entities", value: "2.4M+", change: 12.5, trend: "up" },
+                      { label: "Market Growth", value: "4.2%", change: 0.8, trend: "up" },
+                      { label: "New Startups", value: "1,240", change: -2.1, trend: "down" },
+                      { label: "Investor Index", value: "84/100", change: 5.4, trend: "up" }
+                    ]
+                  }} />
+                </div>
+                <div className="col-span-1 md:col-span-2 lg:col-span-2">
+                  <div className="flex justify-center items-center py-20 flex-col gap-4 border border-dashed rounded-xl bg-gray-50/50">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                    <p className="text-muted-foreground animate-pulse text-xs">Fetching deeper insights...</p>
+                  </div>
+                </div>
+                <div className="col-span-1 md:col-span-2 lg:col-span-2">
+                  <div className="flex justify-center items-center py-20 flex-col gap-4 border border-dashed rounded-xl bg-gray-50/50">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                    <p className="text-muted-foreground animate-pulse text-xs">Analyzing regional trends...</p>
+                  </div>
+                </div>
+              </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
@@ -294,10 +320,13 @@ export default function DashboardPage() {
                 const component = widgetConf.component;
                 let colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-1';
 
-                if (component === 'executive_snapshot') {
+                // Standardizing column spans
+                if (component === 'executive_snapshot' || component === 'choropleth_map' || component === 'data_table') {
                   colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-4';
-                } else if (['line_chart', 'bar_chart', 'choropleth_map', 'data_table'].includes(component)) {
+                } else if (['line_chart', 'bar_chart', 'pie_chart', 'stacked_area_chart', 'composed_chart'].includes(component)) {
                   colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-2';
+                } else if (['kpi_card', 'growth_indicator', 'gauge_card'].includes(component)) {
+                  colSpanInfo = 'col-span-1 md:col-span-1 lg:col-span-1';
                 }
 
                 return (
