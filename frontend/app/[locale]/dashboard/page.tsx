@@ -282,59 +282,63 @@ export default function DashboardPage() {
             </div>
           )}
 
+          {/* Executive Snapshot - Always visible at the top */}
+          <div className="animate-in fade-in duration-700">
+            <WidgetRenderer widget={{
+              component: "executive_snapshot",
+              title: "Algeria Market Pulse",
+              summary_text: "Our AI orchestrated a real-time summary of the current economic climate in Algeria. Market activity remains robust with a focus on startup growth and digital transformation.",
+              key_metrics: [
+                { label: "Active Entities", value: "2.4M+", trend: "up" },
+                { label: "Market Growth", value: "4.2%", trend: "up" },
+                { label: "New Startups", value: "1,240", trend: "down" },
+                { label: "Investor Index", value: "84/100", trend: "up" }
+              ]
+            }} />
+          </div>
+
           {/* Dynamic AI Layout Integration */}
-          {dashboardLayout.length === 0 ? (
-            <div className="space-y-6 animate-in fade-in duration-700">
-              {/* Static Fallback for better UX while waiting or if API fails */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div className="col-span-1 md:col-span-2 lg:col-span-4">
-                  <WidgetRenderer widget={{
-                    component: "executive_snapshot",
-                    title: "Executive Market Overview",
-                    description: "Quick summary of Algeria's economic pulse",
-                    metrics: [
-                      { label: "Active Entities", value: "2.4M+", change: 12.5, trend: "up" },
-                      { label: "Market Growth", value: "4.2%", change: 0.8, trend: "up" },
-                      { label: "New Startups", value: "1,240", change: -2.1, trend: "down" },
-                      { label: "Investor Index", value: "84/100", change: 5.4, trend: "up" }
-                    ]
-                  }} />
-                </div>
-                <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                  <div className="flex justify-center items-center py-20 flex-col gap-4 border border-dashed rounded-xl bg-gray-50/50">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
-                    <p className="text-muted-foreground animate-pulse text-xs">Fetching deeper insights...</p>
-                  </div>
-                </div>
-                <div className="col-span-1 md:col-span-2 lg:col-span-2">
-                  <div className="flex justify-center items-center py-20 flex-col gap-4 border border-dashed rounded-xl bg-gray-50/50">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
-                    <p className="text-muted-foreground animate-pulse text-xs">Analyzing regional trends...</p>
-                  </div>
+          {dashboardLayout.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
+              {dashboardLayout
+                .filter(w => w.component !== 'executive_snapshot') // Prevent duplication
+                .map((widgetConf, index) => {
+                  const component = widgetConf.component;
+                  let colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-1';
+
+                  // Standardizing column spans
+                  if (component === 'choropleth_map' || component === 'data_table') {
+                    colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-4';
+                  } else if (['line_chart', 'bar_chart', 'pie_chart', 'stacked_area_chart', 'composed_chart'].includes(component)) {
+                    colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-2';
+                  } else if (['kpi_card', 'growth_indicator', 'gauge_card'].includes(component)) {
+                    colSpanInfo = 'col-span-1 md:col-span-1 lg:col-span-1';
+                  }
+
+                  return (
+                    <div key={index} className={colSpanInfo}>
+                      <WidgetRenderer widget={widgetConf} />
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+
+          {/* Loading placeholders if no dynamic layout yet */}
+          {dashboardLayout.length === 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="col-span-1 md:col-span-2 lg:col-span-2">
+                <div className="flex justify-center items-center py-20 flex-col gap-4 border border-dashed rounded-xl bg-gray-50/50">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                  <p className="text-muted-foreground animate-pulse text-xs">Analyzing regional trends...</p>
                 </div>
               </div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100">
-              {dashboardLayout.map((widgetConf, index) => {
-                const component = widgetConf.component;
-                let colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-1';
-
-                // Standardizing column spans
-                if (component === 'executive_snapshot' || component === 'choropleth_map' || component === 'data_table') {
-                  colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-4';
-                } else if (['line_chart', 'bar_chart', 'pie_chart', 'stacked_area_chart', 'composed_chart'].includes(component)) {
-                  colSpanInfo = 'col-span-1 md:col-span-2 lg:col-span-2';
-                } else if (['kpi_card', 'growth_indicator', 'gauge_card'].includes(component)) {
-                  colSpanInfo = 'col-span-1 md:col-span-1 lg:col-span-1';
-                }
-
-                return (
-                  <div key={index} className={colSpanInfo}>
-                    <WidgetRenderer widget={widgetConf} />
-                  </div>
-                );
-              })}
+              <div className="col-span-1 md:col-span-2 lg:col-span-2">
+                <div className="flex justify-center items-center py-20 flex-col gap-4 border border-dashed rounded-xl bg-gray-50/50">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary/40" />
+                  <p className="text-muted-foreground animate-pulse text-xs">Synthesizing live data...</p>
+                </div>
+              </div>
             </div>
           )}
 

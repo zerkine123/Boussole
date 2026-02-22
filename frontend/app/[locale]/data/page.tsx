@@ -126,19 +126,19 @@ export default function DataExplorerPage() {
             2. Active → compact toolbar strip
         ─────────────────────────────────────────────────────────────── */}
         <div
-          className={`relative overflow-hidden transition-all duration-500 ease-in-out
-            ${hasResults || isGenerating ? "shadow-lg bg-emerald-900" : "shadow-sm bg-emerald-600"}`}
+          className={`relative overflow-hidden transition-all duration-500 ease-in-out shadow-sm
+            ${hasResults || isGenerating ? "bg-emerald-600" : "bg-emerald-500"}`}
         >
-          {/* Decorative blobs – fade out in compact mode */}
+          {/* Decorative blobs */}
           <div
             className={`absolute inset-0 pointer-events-none transition-opacity duration-500
-              ${hasResults || isGenerating ? "opacity-0" : "opacity-100"}`}
+              ${hasResults || isGenerating ? "opacity-30" : "opacity-100"}`}
           >
-            <div className="absolute top-[20%] left-[10%] w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-            <div className="absolute top-[40%] right-[15%] w-36 h-36 bg-white/10 rounded-full blur-3xl" />
+            <div className="absolute top-[20%] left-[10%] w-48 h-48 bg-white/20 rounded-full blur-3xl" />
+            <div className="absolute top-[40%] right-[15%] w-36 h-36 bg-white/20 rounded-full blur-3xl" />
           </div>
 
-          <div className="absolute inset-0 bg-gradient-to-br from-emerald-600/20 to-teal-600/10 pointer-events-none" />
+          <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
 
           {/* ── IDLE STATE (full hero) ─────────────────────────── */}
           {!hasResults && !isGenerating && (
